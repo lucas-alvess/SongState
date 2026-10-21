@@ -1,8 +1,45 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { AccPref, Lang } from './music';
 
+/**
+ * Estado salvo em localStorage e **compartilhado** entre todos os componentes que usam a mesma
+ * chave: quando um altera, os outros recebem a mudança na hora (ex.: Ajustes → página de Busca).
+ */
+function useSharedStorage<T>(key: string, read: () => T): [T, (v: T | ((prev: T) => T)) => void] {
+  const [value, setValue] = useState<T>(read);
+  const self = useRef(Symbol(key));
+  const latest = useRef(value);
+  latest.current = value;
+
+  useEffect(() => {
+    const on = (e: Event) => {
+      const d = (e as CustomEvent<{ key: string; source: symbol }>).detail;
+      if (d.key === key && d.source !== self.current) setValue(read());
+    };
+    window.addEventListener('ss-storage', on);
+    return () => window.removeEventListener('ss-storage', on);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
+  const set = useCallback(
+    (v: T | ((prev: T) => T)) => {
+      const next = typeof v === 'function' ? (v as (p: T) => T)(latest.current) : v;
+      latest.current = next;
+      setValue(next);
+      try {
+        localStorage.setItem(key, JSON.stringify(next));
+      } catch {
+        /* armazenamento indisponível */
+      }
+      window.dispatchEvent(new CustomEvent('ss-storage', { detail: { key, source: self.current } }));
+    },
+    [key],
+  );
+  return [value, set];
+}
+
 export function useLocalStorage<T>(key: string, initial: T): [T, (v: T | ((prev: T) => T)) => void] {
-  const [value, setValue] = useState<T>(() => {
+  return useSharedStorage<T>(key, () => {
     try {
       const raw = localStorage.getItem(key);
       return raw ? ({ ...(typeof initial === 'object' && !Array.isArray(initial) ? initial : {}), ...JSON.parse(raw) } as T) : initial;
@@ -10,33 +47,17 @@ export function useLocalStorage<T>(key: string, initial: T): [T, (v: T | ((prev:
       return initial;
     }
   });
-  useEffect(() => {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-      /* armazenamento indisponível */
-    }
-  }, [key, value]);
-  return [value, setValue];
 }
 
 /** Para listas (arrays) — sem o merge de objeto do useLocalStorage. */
 export function useStoredList<T>(key: string): [T[], (v: T[] | ((p: T[]) => T[])) => void] {
-  const [value, setValue] = useState<T[]>(() => {
+  return useSharedStorage<T[]>(key, () => {
     try {
       return JSON.parse(localStorage.getItem(key) ?? '[]');
     } catch {
       return [];
     }
   });
-  useEffect(() => {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-      /* armazenamento indisponível */
-    }
-  }, [key, value]);
-  return [value, setValue];
 }
 
 // ---------- Configurações globais ----------

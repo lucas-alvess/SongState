@@ -3,11 +3,23 @@ import { Field } from './ui';
 import { Icon } from './Icon';
 import { logoutSpotify, loginSpotify, redirectUri, useSpotifyConnected, isMobileBrowser } from '../lib/spotify';
 import { useIntegrations } from '../lib/storage';
+import { explainYoutubeError, youtubeSearch } from '../lib/youtube';
 
 export function Integrations() {
   const [cfg, setCfg] = useIntegrations();
   const connected = useSpotifyConnected();
   const [copied, setCopied] = useState(false);
+  const [test, setTest] = useState<{ state: 'idle' | 'testing' | 'ok' | 'error'; msg?: string }>({ state: 'idle' });
+
+  const testKey = async () => {
+    setTest({ state: 'testing' });
+    try {
+      await youtubeSearch('guitar backing track', cfg.youtubeKey, 1);
+      setTest({ state: 'ok' });
+    } catch (e) {
+      setTest({ state: 'error', msg: explainYoutubeError((e as Error).message, window.location.origin) });
+    }
+  };
   const uri = redirectUri();
   const badHost = window.location.hostname === 'localhost';
 
@@ -21,8 +33,29 @@ export function Integrations() {
           Tocar um vídeo não exige configuração (cole o link). Para <b>buscar</b> dentro do site, informe uma chave gratuita da YouTube Data API v3 — cota diária de cerca de 100 buscas.
         </p>
         <Field label="Chave de API">
-          <input type="password" autoComplete="off" value={cfg.youtubeKey} onChange={(e) => setCfg({ ...cfg, youtubeKey: e.target.value.trim() })} placeholder="AIza…" />
+          <input
+            type="password"
+            autoComplete="off"
+            value={cfg.youtubeKey}
+            onChange={(e) => {
+              setCfg({ ...cfg, youtubeKey: e.target.value.trim() });
+              setTest({ state: 'idle' });
+            }}
+            placeholder="AIza…"
+          />
         </Field>
+        <div className="row gap wrap key-test">
+          <button type="button" className="btn small" disabled={!cfg.youtubeKey || test.state === 'testing'} onClick={testKey}>
+            {test.state === 'testing' ? 'Testando…' : 'Testar chave'}
+          </button>
+          {cfg.youtubeKey && test.state === 'idle' && <span className="muted small-text">Chave salva neste navegador.</span>}
+          {test.state === 'ok' && (
+            <span className="tag live">
+              <Icon name="check" size={12} /> Chave funcionando
+            </span>
+          )}
+        </div>
+        {test.state === 'error' && <div className="form-warn">{test.msg}</div>}
         <details>
           <summary>Como obter a chave</summary>
           <ol className="steps-list">

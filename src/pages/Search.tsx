@@ -8,7 +8,7 @@ import { sourceFromTrack, usePlayer, type Track } from '../lib/player';
 import { parseLink, type Song } from '../lib/songs';
 import { spotifyOembed, spotifySearch, useSpotifyConnected } from '../lib/spotify';
 import { uid, useIntegrations, useLocalStorage, useStoredList } from '../lib/storage';
-import { youtubeOembed, youtubeSearch, youtubeThumb } from '../lib/youtube';
+import { explainYoutubeError, youtubeOembed, youtubeSearch, youtubeThumb } from '../lib/youtube';
 
 type Provider = 'youtube' | 'spotify';
 
@@ -53,7 +53,8 @@ export function Search() {
           setResults(r.map((x) => ({ provider: 'spotify', id: x.id, uri: x.uri, title: x.title, artist: x.subtitle, thumb: x.thumb })));
         }
       } catch (e) {
-        setError((e as Error).message);
+        const msg = (e as Error).message;
+        setError(provider === 'youtube' ? explainYoutubeError(msg, window.location.origin) : msg);
       } finally {
         setLoading(false);
       }

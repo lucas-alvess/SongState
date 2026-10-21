@@ -70,3 +70,19 @@ export async function youtubeOembed(url: string): Promise<{ title: string; autho
 }
 
 export const youtubeThumb = (id: string) => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+
+/** Converte a mensagem de erro da API do Google em uma orientação em português. */
+export function explainYoutubeError(message: string, origin: string): string {
+  const m = message.toLowerCase();
+  if (m.includes('referer') || m.includes('referrer'))
+    return `A chave tem restrição de site e este endereço não está na lista. No Google Cloud, em "Restrições de aplicativo", adicione ${origin}/* (com a barra e o asterisco no final).`;
+  if (m.includes('not valid') || m.includes('invalid'))
+    return 'A chave foi recusada como inválida. Confira se ela foi copiada inteira, sem espaços, e se é uma "Chave de API" (começa com AIza).';
+  if (m.includes('has not been used') || m.includes('disabled') || m.includes('accessnotconfigured'))
+    return 'A YouTube Data API v3 não está ativada no projeto desta chave. Ative em "APIs e serviços → Biblioteca" e aguarde 1–2 minutos.';
+  if (m.includes('blocked') || m.includes('not allowed') || m.includes('restricted'))
+    return 'A chave está restrita e não permite a YouTube Data API v3. Em "Restrições de API", marque a YouTube Data API v3.';
+  if (m.includes('quota')) return 'A cota diária gratuita desta chave acabou. Tente de novo amanhã ou cole o link do vídeo direto.';
+  if (m.includes('failed to fetch') || m.includes('network')) return 'Sem conexão com o Google. Verifique a internet ou se algum bloqueador de anúncios está impedindo a requisição.';
+  return message;
+}
