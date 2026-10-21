@@ -82,10 +82,13 @@ export function logoutSpotify() {
   playerPromise = null;
 }
 
+/** O Spotify respondeu e recusou (diferente de estar sem internet). */
+class RefusedError extends Error {}
+
 async function tokenRequest(body: Record<string, string>) {
   const res = await fetch(`${AUTH}/api/token`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(body) });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error_description ?? json.error ?? 'Falha ao autenticar no Spotify');
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new RefusedError(json.error_description ?? json.error ?? 'Falha ao autenticar no Spotify');
   return json as { access_token: string; refresh_token?: string; expires_in: number };
 }
 
@@ -126,10 +129,41 @@ export async function getToken(): Promise<string | null> {
     const next = { access: n.access_token, refresh: n.refresh_token ?? t.refresh, expires: Date.now() + n.expires_in * 1000 };
     saveTokens(next);
     return next.access;
-  } catch {
-    saveTokens(null);
+  } catch (e) {
+    // só desconecta se o Spotify recusou a renovação; sem internet, mantém o login para tentar depois
+    if (e instanceof RefusedError) saveTokens(null);
     return null;
   }
+}
+
+export interface SpotifyCheck {
+  ok: boolean;
+  steps: { label: string; ok: boolean; detail?: string }[];
+}
+
+/** Autoteste da conexão: token, conta (Premium), navegador compatível e SDK. Cada passo diz o que corrigir. */
+export async function spotifyCheck(): Promise<SpotifyCheck> {
+  const steps: SpotifyCheck['steps'] = [];
+  const add = (label: string, ok: boolean, detail?: string) => steps.push({ label, ok, detail });
+  const token = await getToken();
+  if (!token) {
+    add('Login', false, navigator.onLine === false ? 'Sem internet.' : 'Conecte sua conta do Spotify.');
+    return { ok: false, steps };
+  }
+  add('Login', true);
+  try {
+    const me = await api('/me');
+    add('Conta', true, `${me?.display_name ?? me?.id ?? 'conectada'}`);
+    const premium = me?.product === 'premium';
+    add('Premium', premium, premium ? undefined : 'O player completo só funciona com Premium. Os links embutidos continuam funcionando.');
+  } catch (e) {
+    add('Conta', false, /forbidden|not registered|403/i.test((e as Error).message) ? 'Seu e-mail precisa estar em "User Management" do app no painel do Spotify (modo desenvolvimento).' : (e as Error).message);
+    return { ok: false, steps };
+  }
+  add('Navegador', !isMobileBrowser(), isMobileBrowser() ? 'No celular o Spotify só permite o player embutido.' : undefined);
+  const hasDrm = typeof navigator.requestMediaKeySystemAccess === 'function';
+  add('Áudio protegido (DRM)', hasDrm, hasDrm ? undefined : 'Este navegador não oferece o DRM exigido pelo Spotify.');
+  return { ok: steps.every((x) => x.ok), steps };
 }
 
 async function api(path: string, init?: RequestInit) {
@@ -226,6 +260,7 @@ export function getSpotifyPlayer(onError: (msg: string) => void): Promise<Spotif
   playerPromise = (async () => {
     await loadSdk();
     return new Promise<SpotifyHandle>((resolve, reject) => {
+      const wait = window.setTimeout(() => fail('O player do Spotify não respondeu. Verifique a internet e se algum bloqueador impede o sdk.scdn.co.'), 20000);
       const player = new window.Spotify.Player({
         name: 'SongState',
         volume: 0.8,
@@ -234,11 +269,12 @@ export function getSpotifyPlayer(onError: (msg: string) => void): Promise<Spotif
         },
       });
       const fail = (msg: string) => {
+        clearTimeout(wait);
         onError(msg);
         playerPromise = null;
         reject(new Error(msg));
       };
-      player.addListener('ready', ({ device_id }: { device_id: string }) => resolve({ player, deviceId: device_id }));
+      player.addListener('ready', ({ device_id }: { device_id: string }) => (clearTimeout(wait), resolve({ player, deviceId: device_id })));
       player.addListener('initialization_error', () => fail('Este navegador não suporta o player do Spotify. Use um navegador de computador (Chrome, Edge ou Firefox).'));
       player.addListener('authentication_error', () => fail('Falha de autenticação. Reconecte sua conta do Spotify nos ajustes.'));
       player.addListener('account_error', () => fail('O player do Spotify exige uma conta Premium.'));

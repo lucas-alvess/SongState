@@ -84,6 +84,12 @@ Tocar um link do YouTube não exige configuração. Para **buscar** e usar o pla
 
 As chaves ficam salvas **somente no navegador** de quem as digita (localStorage). Nenhuma chave está no repositório.
 
+Depois de conectar o Spotify, use **Testar conexão** (Configurações → Spotify e YouTube): ele confere o login, a conta, se é Premium, se o navegador serve e se há DRM, e diz o que corrigir em cada passo.
+
+## Fontes
+
+Inter e Space Grotesk (licença OFL, em `public/fonts`) são servidas pelo próprio site e guardadas pelo service worker: nenhuma requisição ao Google Fonts, e o visual é o mesmo offline.
+
 ## Login Google e sincronização (opcional)
 
 Entrando com o Google, seus dados passam a ficar também na **sua conta**, numa pasta oculta do Drive (`appDataFolder`) que só o SongState enxerga — o app pede só a permissão `drive.appdata` e o e-mail. Sem login, tudo segue como antes (somente neste navegador). **Offline primeiro:** os dados sempre ficam no aparelho; o envio acontece quando há internet e login válido.

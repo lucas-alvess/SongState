@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Field } from './ui';
 import { Icon } from './Icon';
-import { logoutSpotify, loginSpotify, redirectUri, useSpotifyConnected, isMobileBrowser } from '../lib/spotify';
+import { logoutSpotify, loginSpotify, redirectUri, spotifyCheck, useSpotifyConnected, isMobileBrowser, type SpotifyCheck } from '../lib/spotify';
 import { useIntegrations } from '../lib/storage';
 import { explainYoutubeError, youtubeSearch } from '../lib/youtube';
 
@@ -9,6 +9,7 @@ export function Integrations() {
   const [cfg, setCfg] = useIntegrations();
   const connected = useSpotifyConnected();
   const [copied, setCopied] = useState(false);
+  const [check, setCheck] = useState<SpotifyCheck | 'running' | null>(null);
   const [test, setTest] = useState<{ state: 'idle' | 'testing' | 'ok' | 'error'; msg?: string }>({ state: 'idle' });
 
   const testKey = async () => {
@@ -114,7 +115,18 @@ export function Integrations() {
               <span className="tag live">
                 <Icon name="check" size={12} /> Conectado
               </span>
-              <button type="button" className="btn small" onClick={logoutSpotify}>
+              <button
+                type="button"
+                className="btn small"
+                disabled={check === 'running'}
+                onClick={() => {
+                  setCheck('running');
+                  spotifyCheck().then(setCheck, (e) => setCheck({ ok: false, steps: [{ label: 'Teste', ok: false, detail: (e as Error).message }] }));
+                }}
+              >
+                {check === 'running' ? 'Testando…' : 'Testar conexão'}
+              </button>
+              <button type="button" className="btn small" onClick={() => (setCheck(null), logoutSpotify())}>
                 Desconectar
               </button>
             </>
@@ -124,6 +136,17 @@ export function Integrations() {
             </button>
           )}
         </div>
+        {check && check !== 'running' && (
+          <ul className="check-list" role="status">
+            {check.steps.map((st) => (
+              <li key={st.label} className={st.ok ? 'ok-text' : 'warn-text'}>
+                <b>{st.ok ? '✓' : '✗'} {st.label}</b>
+                {st.detail ? <span className="muted"> — {st.detail}</span> : null}
+              </li>
+            ))}
+            <li>{check.ok ? 'Tudo certo: o player completo deve funcionar.' : 'Corrija os itens com ✗ e teste de novo.'}</li>
+          </ul>
+        )}
         <details>
           <summary>Como obter o Client ID</summary>
           <ol className="steps-list">
