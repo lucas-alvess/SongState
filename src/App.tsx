@@ -119,6 +119,7 @@ export default function App() {
               <Route path="/backing" element={<Backing />} />
               <Route path="/backing/jam" element={<Backing jam />} />
               <Route path="/backing/buscar" element={<Backing search />} />
+              <Route path="/backing/looper" element={<Backing looper />} />
               <Route path="/backing/:id" element={<SongPage />} />
             </Routes>
             </SafeRoutes>

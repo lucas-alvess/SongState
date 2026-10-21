@@ -103,6 +103,7 @@ export class Jam {
   private next = 0;
   private master!: GainNode;
   private resumeAt = 0; // passo em que a música começa após a contagem
+  private musicStart: number | null = null; // instante (relógio do áudio) em que a música começa, depois da contagem
 
   constructor(
     cfg: JamConfig,
@@ -113,6 +114,11 @@ export class Jam {
 
   get playing() {
     return this.timer !== undefined;
+  }
+
+  /** Quando a música (não a contagem) começa, no relógio do AudioContext. Disponível logo depois de `start()`. */
+  get musicStartTime() {
+    return this.musicStart;
   }
 
   applyVolumes() {
@@ -137,6 +143,9 @@ export class Jam {
     this.step = countIn ? -16 : from;
     this.resumeAt = from;
     this.next = c.currentTime + 0.12;
+    // a contagem tem 16 passos (1 compasso); a música começa logo depois dela. Calculado já aqui porque
+    // quem grava junto precisa saber o instante antes de a música ser agendada.
+    this.musicStart = this.next + (countIn ? 16 * (60 / this.cfg.bpm / 4) : 0);
     this.tick();
     this.timer = window.setInterval(() => this.tick(), 25);
   }

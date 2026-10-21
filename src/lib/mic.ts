@@ -38,14 +38,16 @@ export function explainMicError(e: unknown): string {
   }
 }
 
-/**
- * Abre o microfone com os filtros do navegador DESLIGADOS (cancelamento de eco, supressão de ruído e ganho
- * automático distorcem a altura das notas e atrapalham o afinador).
- */
-export async function openMic(deviceId?: string): Promise<Mic> {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, ...(deviceId ? { deviceId: { exact: deviceId } } : {}) },
+/** Pede o microfone com os filtros do navegador DESLIGADOS (eco, ruído e ganho automático distorcem a altura e o timbre). */
+export function openMicStream(deviceId?: string): Promise<MediaStream> {
+  return navigator.mediaDevices.getUserMedia({
+    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1, ...(deviceId ? { deviceId: { exact: deviceId } } : {}) },
   });
+}
+
+/** Microfone + analisador (afinador). */
+export async function openMic(deviceId?: string): Promise<Mic> {
+  const stream = await openMicStream(deviceId);
   try {
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new AC();

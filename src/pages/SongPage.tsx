@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { BackingPlayer, type PlayerState } from '../components/BackingPlayer';
+import { BackingPlayer, type PlayerState, type TransportEvent } from '../components/BackingPlayer';
+import { TakeRecorder } from '../components/TakeRecorder';
 import { Icon } from '../components/Icon';
 import { Metronome } from '../components/Metronome';
 import { SourcePlayer } from '../components/Players';
@@ -12,6 +13,7 @@ import { makeSlot, type StyleId } from '../lib/jam';
 import { BUILTIN_SONGS } from '../lib/library';
 import { mod12, pcLabel, scaleById } from '../lib/music';
 import { suggestedScales, type Song } from '../lib/songs';
+import { deleteLoopFiles, sanitizeLoops, type LoopMeta } from '../lib/loops';
 import { delFile, useSettings, useStoredList } from '../lib/storage';
 
 export function SongPage() {
@@ -32,11 +34,14 @@ function SongView({ song }: { song: Song }) {
   const nav = useNavigate();
   const { settings } = useSettings();
   const [, setSongs] = useStoredList<Song>('ss.songs');
+  const [rawLoops, setLoops] = useStoredList<LoopMeta>('ss.loops');
   const [editing, setEditing] = useState(false);
   const [srcIdx, setSrcIdx] = useState(0);
   const [metro, setMetro] = useState(false);
   const [board, setBoardRaw] = useState<BoardState | null>(null);
   const [player, setPlayer] = useState<PlayerState>({ slot: null, shift: 0 });
+  const [transport, setTransport] = useState<(TransportEvent & { n: number }) | null>(null);
+  const transportN = useRef(0);
 
   const chart = useMemo(() => parseChart(song.chart ?? '', settings.pref), [song.chart, settings.pref]);
   const slots = useMemo(() => chart.slots.map((s) => makeSlot(s.rootPc, s.bassPc, s.typeId, s.len, s.bar, s.label)), [chart]);
@@ -52,6 +57,10 @@ function SongView({ song }: { song: Song }) {
   const remove = async () => {
     if (!confirm(`Excluir "${song.title}"?`)) return;
     await Promise.all(song.sources.filter((s) => s.kind === 'file').map((s) => delFile(s.fileId!).catch(() => {})));
+    // as gravações feitas sobre esta música também saem (o áudio não pode ficar órfão ocupando espaço)
+    const takes = sanitizeLoops(rawLoops).filter((l) => l.songId === song.id);
+    await Promise.all(takes.map((t) => deleteLoopFiles(t)));
+    if (takes.length) setLoops((l) => l.filter((x) => !takes.some((t) => t.id === x.id)));
     setSongs((l) => l.filter((s) => s.id !== song.id));
     nav('/backing');
   };
@@ -101,6 +110,7 @@ function SongView({ song }: { song: Song }) {
           pref={chart.pref}
           resetKey={song.id}
           onState={setPlayer}
+          onTransport={(e) => setTransport({ ...e, n: ++transportN.current })}
         />
       ) : (
         <div className="panel empty">
@@ -114,6 +124,8 @@ function SongView({ song }: { song: Song }) {
           </button>
         </div>
       )}
+
+      {slots.length > 0 && <TakeRecorder songId={song.id} title={song.title} event={transport} />}
 
       <section className="panel player-panel">
         <div className="row between">

@@ -9,6 +9,7 @@
 import { delFile, dbKeys, getFile, putFile } from './db';
 import { MIGRATIONS } from './migrations';
 import { SCALES } from './music';
+import { LOOPS_KEY, loopFileIds, sanitizeLoops } from './loops';
 import { sanitizeSong, type Song } from './songs';
 import type { Lesson } from './curriculum';
 import { MAX_ITEMS, prune, type DaysMap, type SrsMap } from './srs';
@@ -22,11 +23,12 @@ const KEY_STUDIES = 'ss.studies';
 const KEY_STATS = 'ss.stats';
 const KEY_SRS = 'ss.srs'; // revisão espaçada do Treino
 const KEY_DAYS = 'ss.days'; // resumo diário de estudo
+const KEY_LOOPS = LOOPS_KEY; // loops e gravações (o áudio vai junto só se o usuário marcar "incluir áudio")
 const STUDY_PROGRESS = /^ss\.study\.[\w-]{1,60}$/;
-const PREFS = /^ss\.(settings|board|chords|fields|jam|mix|dock|search|treino|goal|tuner|studies\.tab|cfg\.[\w-]{1,40})$/;
+const PREFS = /^ss\.(settings|board|chords|fields|jam|mix|dock|search|treino|goal|tuner|looper|studies\.tab|cfg\.[\w-]{1,40})$/;
 
 /** Dados do usuário (têm regra de mesclagem própria). */
-export const isDataKey = (k: string) => k === KEY_SONGS || k === KEY_STUDIES || k === KEY_STATS || k === KEY_SRS || k === KEY_DAYS || STUDY_PROGRESS.test(k);
+export const isDataKey = (k: string) => k === KEY_SONGS || k === KEY_STUDIES || k === KEY_STATS || k === KEY_SRS || k === KEY_DAYS || k === KEY_LOOPS || STUDY_PROGRESS.test(k);
 /** Preferências de tela (valem para backup, mas nunca sobrescrevem o que já existe ao mesclar). */
 export const isPrefKey = (k: string) => PREFS.test(k);
 export const isBackupKey = (k: string) => isDataKey(k) || isPrefKey(k);
@@ -174,6 +176,10 @@ function sanitizeKey(key: string, value: unknown, files: ReadonlySet<string>): u
   if (key === KEY_STATS) return sanitizeStats(value);
   if (key === KEY_SRS) return sanitizeSrs(value);
   if (key === KEY_DAYS) return sanitizeDays(value);
+  if (key === KEY_LOOPS) {
+    const loops = sanitizeLoops(value, files); // sem o áudio junto, o loop não serve: descarta
+    return loops.length ? loops : null; // nada aproveitável: a chave nem entra (não pode apagar os loops de quem restaura)
+  }
   if (STUDY_PROGRESS.test(key)) return sanitizeProgress(value);
   return sanitizePref(value);
 }
@@ -198,12 +204,11 @@ export function listBackupKeys(store: KeyStore): string[] {
   return keys.sort();
 }
 
-/** Ids dos arquivos de áudio usados pelas músicas do usuário. */
+/** Ids dos arquivos de áudio usados pelas músicas e pelos loops do usuário. */
 export function referencedFileIds(store: KeyStore): string[] {
+  const ids = new Set<string>(loopFileIds(readJson(store, KEY_LOOPS)));
   const songs = readJson(store, KEY_SONGS);
-  if (!Array.isArray(songs)) return [];
-  const ids = new Set<string>();
-  for (const s of songs) for (const src of Array.isArray(s?.sources) ? s.sources : []) if (src?.kind === 'file' && typeof src.fileId === 'string') ids.add(src.fileId);
+  if (Array.isArray(songs)) for (const s of songs) for (const src of Array.isArray(s?.sources) ? s.sources : []) if (src?.kind === 'file' && typeof src.fileId === 'string') ids.add(src.fileId);
   return [...ids];
 }
 
@@ -214,6 +219,7 @@ export async function createBackup(store: KeyStore, opts: { files: boolean }): P
     if (v !== undefined) keys[k] = v;
   }
   const files: BackupFile[] = [];
+  if (!opts.files) delete keys[KEY_LOOPS]; // loops sem áudio não têm utilidade; e ao restaurar não podem apagar os que já existem
   if (opts.files) {
     for (const id of referencedFileIds(store)) {
       const blob = await getFile(id).catch(() => undefined);
@@ -267,7 +273,7 @@ const byId = <T extends { id: string }>(cur: T[], inc: T[]) => [...cur, ...inc.f
 /** Resultado da mesclagem de uma chave de dados. `undefined` em `current` = não existe ainda. */
 export function mergeValue(key: string, current: unknown, incoming: unknown): unknown {
   if (current === undefined) return incoming;
-  if (key === KEY_SONGS || key === KEY_STUDIES) return byId(Array.isArray(current) ? (current as { id: string }[]) : [], incoming as { id: string }[]);
+  if (key === KEY_SONGS || key === KEY_STUDIES || key === KEY_LOOPS) return byId(Array.isArray(current) ? (current as { id: string }[]) : [], incoming as { id: string }[]);
   if (key === KEY_STATS) {
     const cur = isObj(current) ? (current as Record<string, { last: number }>) : {};
     const out: Record<string, { last: number }> = { ...cur };
@@ -303,6 +309,7 @@ export interface Summary {
   exercises: number;
   reviewItems: number;
   studyDays: number;
+  loops: number;
   files: number;
 }
 
@@ -315,6 +322,7 @@ export function summarize(keys: Record<string, unknown>, files: number): Summary
     exercises: isObj(keys[KEY_STATS]) ? Object.keys(keys[KEY_STATS] as object).length : 0,
     reviewItems: isObj(keys[KEY_SRS]) ? Object.keys(keys[KEY_SRS] as object).length : 0,
     studyDays: isObj(keys[KEY_DAYS]) ? Object.keys(keys[KEY_DAYS] as object).length : 0,
+    loops: Array.isArray(keys[KEY_LOOPS]) ? (keys[KEY_LOOPS] as unknown[]).length : 0,
     files,
   };
 }
@@ -331,7 +339,8 @@ export async function applyBackup(backup: Backup, mode: ImportMode, store: KeySt
     next.set(k, JSON.stringify(value));
   }
   if (mode === 'replace') {
-    for (const k of listBackupKeys(store)) if (isDataKey(k) && !(k in backup.keys)) next.set(k, null);
+    // loops ficam se o backup não os trouxe (backup sem áudio): substituir nunca apaga gravações por engano
+    for (const k of listBackupKeys(store)) if (isDataKey(k) && !(k in backup.keys) && k !== KEY_LOOPS) next.set(k, null);
   }
 
   // 1) arquivos de áudio (só os que ainda não existem, para não sobrescrever com cópia antiga)

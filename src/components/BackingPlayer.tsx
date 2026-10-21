@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Field, Toggle } from './ui';
 import { Icon } from './Icon';
+import { getCtx } from '../lib/audio';
 import { Jam, STYLES, transposeSlots, type JamTick, type Slot, type StyleId } from '../lib/jam';
 import { pcLabel, type AccPref } from '../lib/music';
 import { useLocalStorage, useSettings } from '../lib/storage';
@@ -18,6 +19,11 @@ export interface PlayerState {
   shift: number;
 }
 
+/** Avisos de início e fim da base, para quem grava junto (a gravação precisa começar no mesmo instante). */
+export type TransportEvent =
+  | { type: 'start'; startTime: number; musicStart: number; countIn: boolean; fromSlot: number; bpm: number; style: StyleId; vol: { drums: number; bass: number; chords: number }; slots: Slot[] }
+  | { type: 'stop' };
+
 interface Props {
   slots: Slot[];
   defaultBpm: number;
@@ -26,11 +32,12 @@ interface Props {
   minor?: boolean;
   pref: AccPref;
   onState?: (s: PlayerState) => void;
+  onTransport?: (e: TransportEvent) => void;
   /** troca de música/progressão: reinicia andamento, estilo e transposição */
   resetKey?: string;
 }
 
-export function BackingPlayer({ slots, defaultBpm, defaultStyle, keyPc, minor, pref, onState, resetKey }: Props) {
+export function BackingPlayer({ slots, defaultBpm, defaultStyle, keyPc, minor, pref, onState, onTransport, resetKey }: Props) {
   const { settings } = useSettings();
   const [mix, setMix] = useLocalStorage<Mix>('ss.mix', DEFAULT_MIX);
   const [bpm, setBpm] = useState(defaultBpm);
@@ -71,9 +78,12 @@ export function BackingPlayer({ slots, defaultBpm, defaultStyle, keyPc, minor, p
       e.stop();
       setPlaying(false);
       setTick(null);
+      onTransport?.({ type: 'stop' });
     } else {
+      const startTime = getCtx().currentTime;
       e.start(mix.countIn, startSlot);
       setPlaying(true);
+      onTransport?.({ type: 'start', startTime, musicStart: e.musicStartTime ?? startTime + 0.12, countIn: mix.countIn, fromSlot: startSlot, bpm, style, vol: { drums: mix.drums, bass: mix.bass, chords: mix.chords }, slots: timeline });
     }
   };
 

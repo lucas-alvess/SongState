@@ -8,7 +8,7 @@ import { notifyStorage } from '../lib/storage';
 
 const fmtBytes = (n: number) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${Math.round(n / 1024)} KB` : `${n} B`);
 const describe = (s: Summary) =>
-  [s.songs && `${s.songs} música(s)`, s.studies && `${s.studies} estudo(s) próprio(s)`, s.lessonsDone && `${s.lessonsDone} lição(ões) concluída(s)`, s.exercises && `${s.exercises} exercício(s) com histórico`, s.reviewItems && `${s.reviewItems} item(ns) do Treino`, s.studyDays && `${s.studyDays} dia(s) de estudo`, s.files && `${s.files} arquivo(s) de áudio`].filter(Boolean).join(', ') || 'nenhum dado';
+  [s.songs && `${s.songs} música(s)`, s.studies && `${s.studies} estudo(s) próprio(s)`, s.lessonsDone && `${s.lessonsDone} lição(ões) concluída(s)`, s.exercises && `${s.exercises} exercício(s) com histórico`, s.reviewItems && `${s.reviewItems} item(ns) do Treino`, s.studyDays && `${s.studyDays} dia(s) de estudo`, s.loops && `${s.loops} loop(s)/gravação(ões)`, s.files && `${s.files} arquivo(s) de áudio`].filter(Boolean).join(', ') || 'nenhum dado';
 
 interface Info {
   usage?: number;
@@ -135,7 +135,7 @@ export function Data() {
         <p className="muted small-text">
           {last ? `Último backup: ${new Date(last).toLocaleDateString('pt-BR')}.` : 'Você ainda não fez nenhum backup.'} {stale && <b className="warn-text">Faz mais de 30 dias: vale gerar um novo.</b>}
         </p>
-        <p className="muted small-text">O arquivo inclui músicas, estudos próprios, lições concluídas, histórico dos exercícios e preferências. As chaves do Spotify e do YouTube nunca entram no arquivo.</p>
+        <p className="muted small-text">O arquivo inclui músicas, estudos próprios, lições concluídas, histórico dos exercícios e preferências. Loops e gravações só entram quando você marca a opção de incluir áudio. As chaves do Spotify e do YouTube nunca entram no arquivo.</p>
         {info.audioCount > 0 && <Toggle label={`Incluir os ${info.audioCount} arquivo(s) de áudio (${fmtBytes(info.audioBytes)}). O backup fica bem maior.`} checked={withFiles} onChange={setWithFiles} />}
         <div className="row gap wrap" style={{ marginTop: 12 }}>
           <button type="button" className="btn primary" onClick={doExport} disabled={busy}>

@@ -660,3 +660,32 @@ i.heat.l4 { background: #c4b0ff; }
 .string-chip.hit:not(.active) { border-color: var(--cyan); color: var(--text); }
 .a4-value { min-width: 3ch; text-align: center; font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; }
 @media (prefers-reduced-motion: reduce) { .gauge-needle, .level span { transition: none; } }
+
+/* ---- looper ---- */
+.looper-config { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 8px; }
+.pedal { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 14px 0; }
+.pedal-ring { position: relative; width: 200px; height: 200px; }
+.pedal-ring svg { width: 100%; height: 100%; }
+.ring-bg { fill: none; stroke: var(--surface-3); stroke-width: 10; }
+.ring-fg { fill: none; stroke: #a78bfa; stroke-width: 10; stroke-linecap: round; }
+.ring-fg.rec { stroke: var(--red); }
+.pedal-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px; padding: 0 30px; }
+.pedal-center b { font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; }
+.pedal-level { width: 220px; }
+.pedal-main { min-width: 240px; }
+.layer-list { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.layer-row { display: grid; grid-template-columns: 90px 1fr auto auto; gap: 10px; align-items: center; }
+.save-row input { flex: 1; min-width: 160px; }
+.looper-adv { margin-top: 14px; }
+.looper-adv summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; }
+.loop-list { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.loop-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.loop-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; }
+.loop-head input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--violet); }
+.loop-rename { max-width: 260px; }
+.loop-merge { margin-top: 10px; }
+.loop-merge input { flex: 1; min-width: 180px; }
+@media (max-width: 520px) { .layer-row { grid-template-columns: 70px 1fr auto; } .layer-row .tag { grid-column: 1 / -1; } }
+@media (prefers-reduced-motion: reduce) { .ring-fg { transition: none; } }
+.take-level { width: 100%; margin: 8px 0; }
+.take-review { margin-top: 8px; }

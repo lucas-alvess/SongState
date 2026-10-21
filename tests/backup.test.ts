@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { BackupError, LAST_BACKUP_KEY, applyBackup, createBackup, isBackupKey, isSecretKey, mergeValue, parseBackup, wipeAll, type KeyStore } from '../src/lib/backup';
+import { BackupError, LAST_BACKUP_KEY, applyBackup, createBackup, isBackupKey, isSecretKey, mergeValue, parseBackup, referencedFileIds, wipeAll, type KeyStore } from '../src/lib/backup';
 import { closeDb, getFile, putFile } from '../src/lib/db';
 
 class MemStore implements KeyStore {
@@ -254,6 +254,54 @@ describe('Treino: revisão espaçada e resumo diário', () => {
     expect([m.a.i, m.b.i, Object.keys(m).length]).toEqual([7, 9, 3]);
     const d = mergeValue('ss.days', { x: { n: 5, ok: 1, by: {} }, y: { n: 1, ok: 1, by: {} } }, { x: { n: 2, ok: 2, by: {} }, y: { n: 9, ok: 9, by: {} } }) as Record<string, { n: number }>;
     expect([d.x.n, d.y.n]).toEqual([5, 9]);
+  });
+});
+
+describe('loops e gravações no backup', () => {
+  const loop = (id: string, file: string) => ({ id, name: 'Riff', kind: 'loop', bpm: 100, beats: 4, bars: 2, sampleRate: 8000, samples: 100, layers: [{ id: file, vol: 1, mute: false }], createdAt: 1, updatedAt: 1 });
+
+  it('sem "incluir áudio" a lista de loops não entra no backup', async () => {
+    const s = new MemStore();
+    s.setItem('ss.loops', JSON.stringify([loop('l1', 'lp-aaa')]));
+    s.setItem('ss.stats', '{}');
+    const { blob } = await createBackup(s, { files: false });
+    expect(Object.keys(JSON.parse(await text(blob)).keys)).toEqual(['ss.stats']);
+  });
+
+  it('com áudio: ida e volta restaura a lista e o arquivo', async () => {
+    await putFile('lp-aaa', new Blob(['wav-bytes'], { type: 'audio/wav' }));
+    const a = new MemStore();
+    a.setItem('ss.loops', JSON.stringify([loop('l1', 'lp-aaa')]));
+    const { blob, counts } = await createBackup(a, { files: true });
+    expect(counts).toMatchObject({ loops: 1, files: 1 });
+    indexedDB = new IDBFactory();
+    await closeDb();
+    const b = new MemStore();
+    const { summary } = await applyBackup(parseBackup(await text(blob)), 'merge', b);
+    expect(summary.loops).toBe(1);
+    expect(JSON.parse(b.getItem('ss.loops')!)[0].layers[0].id).toBe('lp-aaa');
+    expect(await (await getFile('lp-aaa'))!.text()).toBe('wav-bytes');
+  });
+
+  it('loops cujo áudio não veio no arquivo são descartados na importação', () => {
+    const b = parseBackup(JSON.stringify({ app: 'songstate', format: 1, schema: 1, files: [], keys: { 'ss.loops': [loop('l1', 'lp-aaa')] } }));
+    expect(b.keys['ss.loops']).toBeUndefined();
+  });
+
+  it('substituir com um backup sem loops NÃO apaga os loops que já existem', async () => {
+    const s = new MemStore();
+    s.setItem('ss.loops', JSON.stringify([loop('l1', 'lp-aaa')]));
+    s.setItem('ss.songs', JSON.stringify([song('velha')]));
+    const backup = parseBackup(JSON.stringify({ app: 'songstate', format: 1, schema: 1, files: [], keys: { 'ss.stats': {} } }));
+    await applyBackup(backup, 'replace', s);
+    expect(s.getItem('ss.loops')).not.toBeNull();
+    expect(s.getItem('ss.songs')).toBeNull(); // os outros dados seguem a regra de substituir
+  });
+
+  it('o áudio dos loops conta como arquivo referenciado (entra na estimativa de tamanho)', () => {
+    const s = new MemStore();
+    s.setItem('ss.loops', JSON.stringify([loop('l1', 'lp-aaa'), loop('l2', 'lp-bbb')]));
+    expect(referencedFileIds(s).sort()).toEqual(['lp-aaa', 'lp-bbb']);
   });
 });
 
