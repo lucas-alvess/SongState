@@ -308,7 +308,7 @@ details[open] > summary::before { content: '▾ '; }
 .dg-label { font-size: 0.7rem; color: var(--muted); font-family: ui-monospace, Consolas, monospace; letter-spacing: 0.05em; }
 
 /* ---------- Backing ---------- */
-.subtabs { display: flex; gap: 8px; margin-top: 12px; }
+.subtabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .subtab { display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; border-radius: 12px; text-decoration: none; color: var(--muted); background: var(--surface); border: 1px solid var(--border); font-weight: 600; }
 .subtab.active { color: #fff; background: var(--grad); border-color: transparent; box-shadow: 0 6px 22px rgba(139, 92, 246, 0.35); }
 .lib-toolbar { margin-bottom: 4px; }

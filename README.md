@@ -108,6 +108,13 @@ Entrando com o Google, seus dados passam a ficar também na **sua conta**, numa 
    - no GitHub: *Settings → Secrets and variables → Actions → Variables → New repository variable* com o nome `GOOGLE_CLIENT_ID` e rode o deploy de novo; ou
    - no site: *Configurações → Conta e sincronização → Configuração avançada*, cole o ID (vale só naquele navegador).
 
+## Testes
+
+- `npm test`: testes unitários (Vitest) — música, revisão espaçada, backup, WAV, looper, sincronização com um Drive falso etc.
+- `npm run a11y`: acessibilidade (axe-core) em todas as telas, no computador e no celular.
+- `npm run e2e`: testes no Chrome real sobre o build (`npm run build` antes), com microfone e Google/Drive simulados: abre todas as rotas e links internos, afinador (A2 e E2 +25 cents), looper (4,000 s exatos e 8 cliques no tempo) e sincronização entre dois aparelhos. Dá para rodar só algumas suítes: `npm run e2e -- tuner sync`.
+- Os três rodam no GitHub Actions antes de cada publicação.
+
 ## Estrutura
 
 ```

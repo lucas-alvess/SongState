@@ -33,6 +33,8 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
       - name: Acessibilidade (axe-core)
         run: npm run a11y
+      - name: Testes de interface (Chrome, microfone e Google simulados)
+        run: npm run e2e
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
