@@ -13,6 +13,7 @@ import { Backing } from './pages/Backing';
 import { SongPage } from './pages/SongPage';
 import { Dock } from './components/Dock';
 import { PlayerProvider } from './lib/player';
+import { useInstall, useOnline } from './lib/pwa';
 
 const NAV: { to: string; label: string; icon: IconName; end?: boolean }[] = [
   { to: '/', label: 'Braço', icon: 'fretboard', end: true },
@@ -27,6 +28,8 @@ export default function App() {
   const [open, setOpen] = useState(false);
   const update = useCallback((patch: Partial<Settings>) => setSettings((s) => ({ ...s, ...patch })), [setSettings]);
   const ctx = useMemo(() => ({ settings, update }), [settings, update]);
+  const { canPrompt, install } = useInstall();
+  const online = useOnline();
 
   return (
     <SettingsContext.Provider value={ctx}>
@@ -49,6 +52,12 @@ export default function App() {
                 </NavLink>
               ))}
             </div>
+            {!online && <span className="tag offline">Offline</span>}
+            {canPrompt && (
+              <button type="button" className="btn small primary install-btn" onClick={install}>
+                <Icon name="upload" size={15} /> Instalar app
+              </button>
+            )}
             <button type="button" className="btn icon" onClick={() => setOpen(true)} aria-label="Configurações">
               <Icon name="sliders" size={18} />
             </button>

@@ -424,3 +424,16 @@ body.has-dock:has(.dock.min) .content { padding-bottom: 170px; }
   body.has-dock .content { margin-left: 24px; margin-right: 436px; max-width: none; }
   body.has-dock .content, body.has-dock:has(.dock.min) .content { padding-bottom: 70px; }
 }
+
+/* ---------- App instalado (PWA) ---------- */
+.topbar { padding-top: calc(10px + env(safe-area-inset-top, 0px)); padding-left: max(28px, env(safe-area-inset-left, 0px)); padding-right: max(28px, env(safe-area-inset-right, 0px)); }
+.tag.offline { background: rgba(251, 191, 36, 0.14); color: var(--amber); border-color: rgba(251, 191, 36, 0.4); font-weight: 600; }
+.install-btn { white-space: nowrap; }
+.install-card h3 { margin-bottom: 8px; }
+@media (max-width: 760px) {
+  .topbar { padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); gap: 10px; }
+}
+@media (display-mode: standalone) {
+  html, body { overscroll-behavior-y: none; }
+  .content { padding-left: max(22px, env(safe-area-inset-left, 0px)); padding-right: max(22px, env(safe-area-inset-right, 0px)); }
+}

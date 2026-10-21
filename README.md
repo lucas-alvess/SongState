@@ -37,6 +37,16 @@ Configuração feita uma única vez no GitHub:
 
 O site usa rotas com `#` (HashRouter) e `base: './'`, então funciona em qualquer subcaminho sem configuração extra.
 
+## Instalar como aplicativo (PWA)
+
+O SongState é um PWA: pode ser instalado e abre em janela própria, inclusive sem internet (as partes que não dependem de YouTube/Spotify/Google).
+
+- **Chrome / Edge (computador):** ícone de instalar na barra de endereço, ou o botão **Instalar app** no topo do site, ou menu ⋮ → *Instalar SongState*.
+- **Android (Chrome):** menu ⋮ → *Instalar app* (ou o botão **Instalar app** no topo).
+- **iPhone / iPad (Safari):** *Compartilhar* → *Adicionar à Tela de Início*.
+
+Como funciona: [`public/sw.js`](public/sw.js) guarda o app em cache na primeira visita (navegação com rede primeiro, arquivos com hash em cache primeiro). A cada build, o `vite.config.ts` carimba o service worker com um id novo, então cada deploy invalida o cache antigo sozinho. Requisições para outros domínios (YouTube, Spotify, Google) não passam pelo service worker. Os ícones foram gerados a partir de [`public/icons/icon.svg`](public/icons/icon.svg).
+
 ## Spotify e YouTube (opcional)
 
 Tocar um link do YouTube não exige configuração. Para **buscar** e usar o player completo do Spotify, abra **Ajustes → Spotify e YouTube** no site:
