@@ -41,7 +41,7 @@ O site usa rotas com `#` (HashRouter) e `base: './'`, então funciona em qualque
 
 Tocar um link do YouTube não exige configuração. Para **buscar** e usar o player completo do Spotify, abra **Ajustes → Spotify e YouTube** no site:
 
-- **YouTube:** informe uma chave gratuita da YouTube Data API v3.
+- **YouTube:** informe uma chave gratuita da YouTube Data API v3. A chave aparece nas requisições do navegador, então **restrinja-a** no Google Cloud: em *Restrições de aplicativo* use *Sites (referenciadores HTTP)* com `https://lucas-alvess.github.io/*` (e `http://127.0.0.1:5173/*` para testes locais) e, em *Restrições de API*, permita apenas a *YouTube Data API v3*.
 - **Spotify:** informe o *Client ID* de um app criado em [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) e adicione ao app o *Redirect URI* exibido nessa tela. Para o site publicado, é `https://lucas-alvess.github.io/SongState/`. O player completo exige conta Premium e navegador de computador.
 
 As chaves ficam salvas **somente no navegador** de quem as digita (localStorage). Nenhuma chave está no repositório.

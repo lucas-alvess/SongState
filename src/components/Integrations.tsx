@@ -33,7 +33,10 @@ export function Integrations() {
               Em <b>APIs e serviços → Biblioteca</b>, ative a <b>YouTube Data API v3</b>.
             </li>
             <li>
-              Em <b>Credenciais → Criar credenciais → Chave de API</b>. Se quiser, restrinja a chave ao endereço do seu site.
+              Em <b>Credenciais → Criar credenciais → Chave de API</b>.
+            </li>
+            <li>
+              <b>Restrinja a chave</b> (importante, pois ela fica visível no navegador): abra a chave e, em <b>Restrições de aplicativo</b>, escolha <b>Sites (referenciadores HTTP)</b> e adicione <code>{window.location.origin}/*</code>. Em <b>Restrições de API</b>, escolha <b>Restringir chave</b> e marque só a <b>YouTube Data API v3</b>.
             </li>
             <li>Cole a chave acima. Ela fica salva só neste navegador.</li>
           </ol>
