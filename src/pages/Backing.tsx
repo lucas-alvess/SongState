@@ -82,7 +82,7 @@ function Library() {
     try {
       const data: unknown = JSON.parse(await file.text());
       if (!Array.isArray(data) || data.length > 500) throw new Error();
-      const clean = data.map(sanitizeSong).filter((s): s is Song => !!s);
+      const clean = data.map((d) => sanitizeSong(d)).filter((s): s is Song => !!s);
       setSongs((cur) => [...cur, ...clean.filter((d) => !cur.some((c) => c.id === d.id))]);
     } catch {
       alert('Arquivo inválido.');
@@ -103,7 +103,7 @@ function Library() {
         </div>
       )}
 
-      <h3 className="section-title">Minha biblioteca</h3>
+      <h3 aria-level={2} className="section-title">Minha biblioteca</h3>
       {songs.length === 0 ? (
         <div className="empty panel">
           <div className="empty-icon">
@@ -127,7 +127,7 @@ function Library() {
 
       {examples.length > 0 && (
         <>
-          <h3 className="section-title">Exemplos prontos</h3>
+          <h3 aria-level={2} className="section-title">Exemplos prontos</h3>
           <div className="card-grid">
             {examples.map((s) => (
               <SongCard key={s.id} s={s} pref={settings.pref} lang={settings.lang} />
@@ -144,7 +144,7 @@ function Library() {
           Importar lista
         </button>
         <input ref={importRef} type="file" accept="application/json" hidden onChange={(e) => importJson(e.target.files?.[0])} />
-        <span className="muted small-text">Use para levar sua lista a outro dispositivo (arquivos de áudio não são exportados).</span>
+        <span className="muted small-text">Só a lista de músicas. Para levar também o progresso e os estudos, use o <Link to="/dados">backup completo</Link>.</span>
       </div>
 
       {adding && (

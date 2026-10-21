@@ -23,7 +23,8 @@ npm install
 npm run dev        # http://127.0.0.1:5173 (também acessível pela rede local)
 npm run build      # gera dist/ (site estático)
 npm run preview    # serve o build para conferir
-npm test           # testes automáticos (música, acordes, campos, conteúdo, banco de dados)
+npm test           # testes automáticos (música, acordes, campos, conteúdo, banco de dados, backup)
+npm run a11y       # acessibilidade (axe-core) sobre o build; precisa do Chrome (CHROME_PATH se não for achado)
 ```
 
 Use `127.0.0.1` em vez de `localhost` se for conectar o Spotify (o Spotify não aceita `localhost`).
@@ -84,17 +85,22 @@ As chaves ficam salvas **somente no navegador** de quem as digita (localStorage)
 src/
   lib/          música e áudio: music.ts (escalas, afinações, posições), harmony.ts (campos harmônicos),
                 curriculum.ts + curriculum-extra.ts (estudos), reference.ts (glossário), chords.ts (acordes,
-                detecção, cifras, digitações), db.ts (IndexedDB versionado), migrations.ts (migração dos dados salvos), jam.ts (motor de backing em Web Audio),
+                detecção, cifras, digitações), db.ts (IndexedDB versionado), migrations.ts (migração dos dados salvos), backup.ts (backup e restauração), jam.ts (motor de backing em Web Audio),
                 curriculum.ts (estudos), exercises.ts, spotify.ts, youtube.ts, player.tsx
   components/   Fretboard (SVG), ScaleBoard, BackingPlayer, Dock (reprodutor fixo),
                 ChordDiagram, Metronome, Integrations ...
   tests/        testes automáticos (Vitest)
+  scripts/      make-icons.mjs (ícones), a11y.mjs (acessibilidade com axe-core)
   pages/        Explorer, Studies, StudyDetail, ExerciseList, quizzes, Chords, Backing, Search, SongPage
 ```
 
 ## Dados e privacidade
 
-Músicas, progresso, configurações e arquivos de áudio ficam no navegador de cada dispositivo (localStorage e IndexedDB). Para levar a lista de músicas a outro aparelho, use **Exportar/Importar lista** na aba Backing (os arquivos de áudio não são exportados).
+Músicas, progresso, configurações e arquivos de áudio ficam no navegador de cada dispositivo (localStorage e IndexedDB).
+
+A página **Dados e backup** (Configurações → Backup e armazenamento, ou `#/dados`) gera um arquivo único com músicas, estudos próprios, lições concluídas, histórico dos exercícios e preferências, e restaura esse arquivo mesclando ou substituindo. Os arquivos de áudio entram se você marcar a opção. As chaves do Spotify e do YouTube **nunca** vão para o arquivo, e tudo o que é importado é validado. A página também mostra o espaço usado e pede ao navegador para não apagar os dados do site.
+
+A lista de músicas isolada continua disponível em **Exportar/Importar lista** na aba Backing.
 
 ## Tecnologias
 

@@ -165,6 +165,7 @@ export function ScaleBoard({ state: st, setState, chordPcs, scaleIds, advanced =
             markers={markers}
             stringsOff={st.stringsOff}
             onCell={onCell}
+            quiz={st.hide}
           />
         </div>
       </div>
@@ -238,14 +239,14 @@ export function ScaleBoard({ state: st, setState, chordPcs, scaleIds, advanced =
             </Field>
             <Field label="Casas">
               <div className="range-row">
-                <select value={st.fretMin} disabled={st.focus} onChange={(e) => setState({ fretMin: +e.target.value })}>
+                <select aria-label="Casa inicial" value={st.fretMin} disabled={st.focus} onChange={(e) => setState({ fretMin: +e.target.value })}>
                   {Array.from({ length: 20 }, (_, i) => (
                     <option key={i} value={i}>
                       de {i === 0 ? 'solta' : i}
                     </option>
                   ))}
                 </select>
-                <select value={st.fretMax} disabled={st.focus} onChange={(e) => setState({ fretMax: +e.target.value })}>
+                <select aria-label="Casa final" value={st.fretMax} disabled={st.focus} onChange={(e) => setState({ fretMax: +e.target.value })}>
                   {[7, 9, 12, 15, 17, 19, 22, 24].map((n) => (
                     <option key={n} value={n}>
                       até {n}

@@ -133,7 +133,7 @@ function SongView({ song }: { song: Song }) {
       </section>
 
       <section>
-        <h3 className="section-title">Escalas para esta música</h3>
+        <h3 aria-level={2} className="section-title">Escalas para esta música</h3>
         <Chips small value={state.scaleId} onChange={(scaleId) => setBoardRaw({ ...state, scaleId, pos: null, degrees: [] })} options={suggestions.map((id) => ({ value: id, label: scaleById(id).name }))} />
         <ScaleBoard state={state} setState={(p) => setBoardRaw({ ...state, ...p })} chordPcs={player.slot?.pcs} advanced={false} />
       </section>

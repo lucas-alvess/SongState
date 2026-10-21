@@ -545,3 +545,22 @@ body.has-dock:has(.dock.min) .content { padding-bottom: 170px; }
 .gloss-item b { font-family: 'Space Grotesk', sans-serif; }
 .gloss-item p { margin: 4px 0 0; font-size: 0.9rem; color: #d6d6f0; }
 .ref-table td, .ref-table th { white-space: nowrap; }
+
+/* ---- dados e backup ---- */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.ok-text { color: var(--green); }
+.warn-text { color: var(--amber); }
+.notice { margin: 12px 0 0; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.92rem; border: 1px solid var(--border-2); }
+.notice.ok { background: rgba(52, 211, 153, 0.1); border-color: rgba(52, 211, 153, 0.4); }
+.notice.err { background: rgba(251, 113, 133, 0.1); border-color: rgba(251, 113, 133, 0.45); }
+.meter { height: 10px; border-radius: 999px; background: var(--surface-3); overflow: hidden; margin: 6px 0; }
+.meter span { display: block; height: 100%; background: var(--grad-cool); border-radius: 999px; }
+.radio-col { display: flex; flex-direction: column; gap: 10px; }
+.radio { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.radio input { width: 18px; height: 18px; flex: none; margin: 2px 0 0; padding: 0; accent-color: var(--violet); }
+.panel > .section-title:first-child { margin-top: 0; }
+.fb-cursor { display: none; fill: none; stroke: var(--cyan); stroke-width: 3; pointer-events: none; }
+.fretboard:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; border-radius: 8px; }
+.fretboard:focus-visible .fb-cursor { display: block; }
+.wheel-seg:focus-visible, .slice:focus-visible { outline: none; }
+.wheel-seg:focus-visible path:first-child, .slice:focus-visible path { stroke: #fff; stroke-width: 3.5; }

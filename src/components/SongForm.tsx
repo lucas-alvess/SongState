@@ -5,12 +5,14 @@ import { parseChart } from '../lib/chords';
 import { STYLES, type StyleId } from '../lib/jam';
 import { pcLabel } from '../lib/music';
 import { delFile, putFile, uid, useSettings } from '../lib/storage';
+import { useSheet } from '../lib/useSheet';
 import { parseLink, type Song, type Source } from '../lib/songs';
 
 const EXAMPLE = '[Verso]\n| Am | C | G | F |\n| Am | C | E7 | E7 |';
 
 export function SongForm({ initial, onSave, onClose }: { initial?: Song; onSave: (s: Song) => void; onClose: () => void }) {
   const { settings } = useSettings();
+  const ref = useSheet<HTMLDivElement>(onClose);
   const [title, setTitle] = useState(initial?.title ?? '');
   const [artist, setArtist] = useState(initial?.artist ?? '');
   const [keyPc, setKeyPc] = useState<number>(initial?.keyPc ?? -1);
@@ -57,7 +59,7 @@ export function SongForm({ initial, onSave, onClose }: { initial?: Song; onSave:
 
   return (
     <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet wide" onClick={(e) => e.stopPropagation()}>
+      <div ref={ref} className="sheet wide" role="dialog" aria-modal="true" aria-label="Música" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-head">
           <h2>{initial && !initial.builtin ? 'Editar música' : initial ? 'Copiar para minha biblioteca' : 'Nova música'}</h2>
           <button type="button" className="btn icon" onClick={onClose} aria-label="Fechar">

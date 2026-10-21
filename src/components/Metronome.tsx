@@ -69,7 +69,7 @@ export function Metronome({ initialBpm = 80 }: { initialBpm?: number }) {
           +
         </button>
       </div>
-      <input type="range" min={30} max={240} value={bpm} onChange={(e) => setBpm(+e.target.value)} />
+      <input type="range" aria-label="Andamento em BPM" min={30} max={240} value={bpm} onChange={(e) => setBpm(+e.target.value)} />
       <div className="row gap">
         <button type="button" className={`btn ${on ? 'danger' : 'primary'}`} onClick={() => setOn(!on)}>
           {on ? 'Parar' : 'Iniciar'}

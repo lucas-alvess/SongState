@@ -34,7 +34,7 @@ export function ExerciseList() {
               </div>
               <div className="card-body">
                 <div className="card-top">
-                  <h3>{e.title}</h3>
+                  <h3 aria-level={2}>{e.title}</h3>
                   <span className={`badge lvl-${e.level}`}>{e.level}</span>
                 </div>
                 <p className="muted">{e.desc}</p>

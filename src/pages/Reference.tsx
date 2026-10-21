@@ -59,7 +59,7 @@ export function Reference() {
           <p className="muted small-text">Fórmulas em graus e as notas de cada escala a partir do Dó.</p>
           {SCALE_GROUPS.map((g) => (
             <div key={g}>
-              <h3 className="section-title" style={{ marginTop: 18 }}>
+              <h3 aria-level={2} className="section-title" style={{ marginTop: 18 }}>
                 {g}
               </h3>
               <div className="table-scroll">
@@ -124,7 +124,7 @@ export function Reference() {
           <p className="muted small-text">Fórmulas dos tipos de acorde do dicionário e as notas de cada um a partir do Dó.</p>
           {CHORD_GROUPS.map((g) => (
             <div key={g}>
-              <h3 className="section-title" style={{ marginTop: 18 }}>
+              <h3 aria-level={2} className="section-title" style={{ marginTop: 18 }}>
                 {g}
               </h3>
               <div className="table-scroll">

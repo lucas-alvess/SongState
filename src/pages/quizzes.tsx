@@ -42,7 +42,7 @@ function Board({ env, fretMax, fretMin = 0, markers, onCell, stringsOff }: { env
   return (
     <div className="board-wrap">
       <div className="board-scroll">
-        <Fretboard tuning={env.tuning} fretMin={fretMin} fretMax={fretMax} vertical={env.vertical} leftHanded={env.leftHanded} markers={markers} onCell={onCell} stringsOff={stringsOff} />
+        <Fretboard tuning={env.tuning} fretMin={fretMin} fretMax={fretMax} vertical={env.vertical} leftHanded={env.leftHanded} markers={markers} onCell={onCell} stringsOff={stringsOff} quiz />
       </div>
     </div>
   );

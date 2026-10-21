@@ -28,6 +28,8 @@ jobs:
         run: npm test
       - name: Verificação de tipos e build
         run: npm run build
+      - name: Acessibilidade (axe-core)
+        run: npm run a11y
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

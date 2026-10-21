@@ -151,7 +151,7 @@ export function ChordBuild() {
       </Prompt>
       <div className="board-wrap">
         <div className="board-scroll">
-          <Fretboard tuning={env.tuning} fretMax={12} vertical={env.vertical} leftHanded={env.leftHanded} markers={markers} onCell={onCell} />
+          <Fretboard tuning={env.tuning} fretMax={12} vertical={env.vertical} leftHanded={env.leftHanded} markers={markers} onCell={onCell} quiz />
         </div>
       </div>
       <div className="row gap wrap">

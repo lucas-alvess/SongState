@@ -75,7 +75,7 @@ function Detail({ lesson, crumb, prev, next, onDelete }: { lesson: Lesson; crumb
 
       {lesson.theory && lesson.theory.length > 0 && (
         <section className="panel theory">
-          <h3>Conceito</h3>
+          <h3 aria-level={2}>Conceito</h3>
           {lesson.theory.map((t, i) => (
             <p key={i}>{t}</p>
           ))}
@@ -100,7 +100,7 @@ function Detail({ lesson, crumb, prev, next, onDelete }: { lesson: Lesson; crumb
       <div className="two-col">
         <section className="panel">
           <div className="row between">
-            <h3>Passo a passo</h3>
+            <h3 aria-level={2}>Passo a passo</h3>
             <span className="muted">
               {doneCount}/{lesson.steps.length}
             </span>
@@ -152,7 +152,7 @@ function Detail({ lesson, crumb, prev, next, onDelete }: { lesson: Lesson; crumb
           <Metronome initialBpm={lesson.bpm} />
           {(lesson.exercises?.length || lesson.chord || lesson.jam || lesson.field || lesson.links?.length) && (
             <section className="panel">
-              <h3>Pratique isto</h3>
+              <h3 aria-level={2}>Pratique isto</h3>
               <div className="link-list">
                 {lesson.exercises?.map((id) => {
                   const ex = exerciseById(id);

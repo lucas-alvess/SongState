@@ -5,6 +5,7 @@ import { Field, PageHeader, RootChips, ScaleSelect } from '../components/ui';
 import { ALL_LESSONS, LEVELS, type Lesson } from '../lib/curriculum';
 import { pcLabel, scaleById } from '../lib/music';
 import { uid, useLocalStorage, useSettings, useStoredList } from '../lib/storage';
+import { useSheet } from '../lib/useSheet';
 
 export function lessonProgress(lesson: Lesson): number {
   try {
@@ -167,6 +168,7 @@ function NewStudy({ onClose, onSave }: { onClose: () => void; onSave: (s: Lesson
   const [scaleId, setScaleId] = useState('minor-pent');
   const [bpm, setBpm] = useState(70);
   const [steps, setSteps] = useState('');
+  const ref = useSheet<HTMLDivElement>(onClose);
 
   const save = () => {
     if (!title.trim()) return;
@@ -183,7 +185,7 @@ function NewStudy({ onClose, onSave }: { onClose: () => void; onSave: (s: Lesson
 
   return (
     <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet" onClick={(e) => e.stopPropagation()}>
+      <div ref={ref} className="sheet" role="dialog" aria-modal="true" aria-label="Novo estudo" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-head">
           <h2>Novo estudo</h2>
           <button type="button" className="btn icon" onClick={onClose} aria-label="Fechar">

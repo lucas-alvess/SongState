@@ -11,6 +11,8 @@ import { ExerciseRunner } from './pages/ExerciseRunner';
 import { Chords } from './pages/Chords';
 import { Fields } from './pages/Fields';
 import { Reference } from './pages/Reference';
+import { Data } from './pages/Data';
+import { SafeRoutes } from './components/ErrorBoundary';
 import { Backing } from './pages/Backing';
 import { SongPage } from './pages/SongPage';
 import { Dock } from './components/Dock';
@@ -40,7 +42,7 @@ export default function App() {
       <HashRouter>
         <GlobalDefs />
         <div className="app">
-          <nav className="topbar">
+          <nav className="topbar" aria-label="Principal">
             <NavLink to="/" className="brand">
               <img className="logo" src={`${import.meta.env.BASE_URL}icons/logo-96.png`} alt="" width={30} height={30} />
               <span>
@@ -66,6 +68,7 @@ export default function App() {
             </button>
           </nav>
           <main className="content">
+            <SafeRoutes>
             <Routes>
               <Route path="/" element={<Explorer />} />
               <Route path="/estudos" element={<Studies />} />
@@ -75,13 +78,15 @@ export default function App() {
               <Route path="/acordes" element={<Chords />} />
               <Route path="/campos" element={<Fields />} />
               <Route path="/referencia" element={<Reference />} />
+              <Route path="/dados" element={<Data />} />
               <Route path="/backing" element={<Backing />} />
               <Route path="/backing/jam" element={<Backing jam />} />
               <Route path="/backing/buscar" element={<Backing search />} />
               <Route path="/backing/:id" element={<SongPage />} />
             </Routes>
+            </SafeRoutes>
           </main>
-          <nav className="tabbar">
+          <nav className="tabbar" aria-label="Navegação inferior">
             {NAV.map((n) => (
               <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => `tab${isActive ? ' active' : ''}`}>
                 <Icon name={n.icon} size={22} />

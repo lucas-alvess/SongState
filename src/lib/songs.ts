@@ -102,7 +102,7 @@ const STYLES = ['rock', 'shuffle', 'ballad', 'funk'] as const;
 const str = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) : '');
 
 /** Valida e reconstrói uma música vinda de um arquivo importado (descarta campos desconhecidos). */
-export function sanitizeSong(d: unknown): Song | null {
+export function sanitizeSong(d: unknown, allowedFiles?: ReadonlySet<string>): Song | null {
   if (!d || typeof d !== 'object') return null;
   const o = d as Record<string, unknown>;
   const id = str(o.id, 40).replace(/[^\w-]/g, '');
@@ -111,6 +111,13 @@ export function sanitizeSong(d: unknown): Song | null {
   const sources: Source[] = [];
   if (Array.isArray(o.sources)) {
     for (const s of o.sources.slice(0, 20)) {
+      const so = s as Record<string, unknown> | null;
+      const fileId = str(so?.fileId, 40);
+      if (so?.kind === 'file' && allowedFiles instanceof Set && allowedFiles.has(fileId) && /^[\w-]+$/.test(fileId)) {
+        // arquivo de áudio: só aceito quando veio junto no backup (o id aponta para o IndexedDB)
+        sources.push({ id: str(so.id, 40).replace(/[^\w-]/g, '') || fileId, kind: 'file', label: str(so.label, 200) || 'arquivo', fileId });
+        continue;
+      }
       const url = str((s as Record<string, unknown>)?.url, 500);
       const src = url ? parseLink(url, str((s as Record<string, unknown>).id, 40).replace(/[^\w-]/g, '') || id) : null;
       if (src && src.kind !== 'file' && (src.kind !== 'link' || safeHref(src.url))) sources.push(src); // embed/uri são recalculados a partir do link

@@ -58,7 +58,7 @@ export function JamPanel() {
       <BackingPlayer slots={slots} defaultBpm={prog.bpm} defaultStyle={prog.style} pref={settings.pref} resetKey={prog.id} onState={setPlayer} />
 
       <section>
-        <h3 className="section-title">Escalas para solar</h3>
+        <h3 aria-level={2} className="section-title">Escalas para solar</h3>
         <Toggle label="Mostrar as notas do acorde atual no braço (âmbar)" checked={st.overlay} onChange={(overlay) => setSt((s) => ({ ...s, overlay }))} />
         <ScaleBoard state={{ ...board, root: boardRoot }} setState={setBoard} chordPcs={st.overlay && player.slot ? player.slot.pcs : undefined} scaleIds={prog.scales} advanced={false} />
       </section>

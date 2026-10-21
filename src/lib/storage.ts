@@ -38,6 +38,12 @@ function useSharedStorage<T>(key: string, read: () => T): [T, (v: T | ((prev: T)
   return [value, set];
 }
 
+/** Avisa os componentes abertos que essas chaves foram alteradas de fora (importação de backup etc.). */
+export function notifyStorage(keys: string[]) {
+  const source = Symbol('external');
+  for (const key of keys) window.dispatchEvent(new CustomEvent('ss-storage', { detail: { key, source } }));
+}
+
 export function useLocalStorage<T>(key: string, initial: T): [T, (v: T | ((prev: T) => T)) => void] {
   return useSharedStorage<T>(key, () => {
     try {

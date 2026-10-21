@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 import { SCALES, SCALE_GROUPS, pcLabel } from '../lib/music';
 import { useSettings } from '../lib/storage';
 
@@ -35,10 +35,12 @@ export function Toggle({ label, checked, onChange }: { label: ReactNode; checked
 }
 
 export function Field({ label, children }: { label: ReactNode; children: ReactNode }) {
+  // um controle de formulário sozinho recebe o rótulo como nome acessível (o <span> não o associa)
+  const control = isValidElement(children) && ['select', 'input', 'textarea'].includes(String(children.type)) && typeof label === 'string' && !(children.props as { 'aria-label'?: string })['aria-label'];
   return (
     <div className="field">
       <span className="field-label">{label}</span>
-      {children}
+      {control ? cloneElement(children as ReactElement<{ 'aria-label'?: string }>, { 'aria-label': label as string }) : children}
     </div>
   );
 }
@@ -46,7 +48,7 @@ export function Field({ label, children }: { label: ReactNode; children: ReactNo
 export function ScaleSelect({ value, onChange, ids }: { value: string; onChange: (id: string) => void; ids?: string[] }) {
   const list = ids ? SCALES.filter((s) => ids.includes(s.id)) : SCALES;
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)}>
+    <select aria-label="Escala" value={value} onChange={(e) => onChange(e.target.value)}>
       {SCALE_GROUPS.map((g) => {
         const items = list.filter((s) => s.group === g);
         return items.length ? (

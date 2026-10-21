@@ -1,14 +1,18 @@
+import { Link } from 'react-router-dom';
+import { Icon } from './Icon';
 import { Chips, Field, Toggle } from './ui';
 import { InstallApp } from './InstallApp';
 import { Integrations } from './Integrations';
 import { TUNINGS } from '../lib/music';
 import { useSettings } from '../lib/storage';
+import { useSheet } from '../lib/useSheet';
 
 export function SettingsPanel({ onClose }: { onClose: () => void }) {
   const { settings, update } = useSettings();
+  const ref = useSheet<HTMLDivElement>(onClose);
   return (
     <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet" onClick={(e) => e.stopPropagation()}>
+      <div ref={ref} className="sheet" role="dialog" aria-modal="true" aria-label="Configurações" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-head">
           <h2>Configurações</h2>
           <button type="button" className="btn icon" onClick={onClose} aria-label="Fechar">
@@ -60,6 +64,10 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
         <InstallApp />
         <h3 className="section-title">Spotify e YouTube</h3>
         <Integrations />
+        <h3 className="section-title">Seus dados</h3>
+        <Link to="/dados" className="btn" onClick={onClose}>
+          <Icon name="download" size={16} /> Backup e armazenamento
+        </Link>
         <p className="muted small-text">Tudo é salvo neste navegador. Músicas e arquivos de áudio não saem do seu dispositivo.</p>
       </div>
     </div>

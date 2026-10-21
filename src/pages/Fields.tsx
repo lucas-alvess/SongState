@@ -71,7 +71,7 @@ export function Fields() {
         </Field>
         <div className="row gap wrap field-row">
           <Field label="Campo harmônico">
-            <select value={p.fieldId} onChange={(e) => patch({ fieldId: e.target.value })}>
+            <select aria-label="Campo harmônico" value={p.fieldId} onChange={(e) => patch({ fieldId: e.target.value })}>
               {FIELD_GROUPS.map((g) => (
                 <optgroup key={g} label={g}>
                   {FIELDS.filter((f) => f.group === g).map((f) => (

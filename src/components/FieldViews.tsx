@@ -36,6 +36,22 @@ export const romanOf = (c: FieldChord, tetrad: boolean) => (tetrad ? c.romanTetr
 const notesOf = (c: FieldChord, tetrad: boolean, lang: Lang) => (tetrad ? c.tetradNotes : c.triadNotes).map((n) => noteLabel(n.spelled, lang)).join(' · ');
 const funcClass = (f?: Func) => (f ? `func-${f}` : 'func-none');
 
+/** Torna um grupo SVG um botão para teclado e leitores de tela. */
+const asButton = (label: string, action: () => void) => ({
+  role: 'button' as const,
+  tabIndex: 0,
+  'aria-label': label,
+  onClick: action,
+  onKeyDown: (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      action();
+    }
+  },
+});
+const chordLabel = (c: FieldChord, tetrad: boolean, hidden: boolean) =>
+  hidden ? `? grau ${c.degree} oculto, ative para revelar` : `${romanOf(c, tetrad)} ${sym(c, tetrad)}${c.func ? `, ${FUNC_NAMES[c.func].name}` : ''}, ative para ouvir`;
+
 /** Célula que pode ficar escondida no modo estudo. */
 function Cell({ id, study, children, always }: { id: string; study: Study; children: ReactNode; always?: boolean }) {
   if (!study.on || always || study.shown.has(id)) return <>{children}</>;
@@ -136,7 +152,7 @@ export function FieldWheel({ field, tetrad, study, onPlay, lang }: { field: Fiel
   const n = field.chords.length;
   const step = 360 / n;
   return (
-    <svg className="wheel" viewBox="-210 -210 420 420" role="img" aria-label="Roda do campo harmônico">
+    <svg className="wheel" viewBox="-210 -210 420 420" role="group" aria-label={`Roda do campo harmônico de ${noteLabel(field.scale.root, lang)} ${shortName(field.def)}`}>
       {field.chords.map((c, i) => {
         const a0 = -90 + i * step + 1;
         const a1 = -90 + (i + 1) * step - 1;
@@ -147,13 +163,13 @@ export function FieldWheel({ field, tetrad, study, onPlay, lang }: { field: Fiel
         const [rx, ry] = polar(88, mid);
         const hidden = study.on && !study.shown.has(idChord);
         return (
-          <g key={c.degree} className="wheel-seg" onClick={() => (hidden ? study.reveal(idChord) : onPlay(c))}>
+          <g key={c.degree} className="wheel-seg" {...asButton(chordLabel(c, tetrad, hidden), () => (hidden ? study.reveal(idChord) : onPlay(c)))}>
             <path d={sector(120, 200, a0, a1)} fill={fill} opacity={hidden ? 0.45 : 0.95} />
             <path d={sector(60, 118, a0, a1)} fill={fill} opacity={0.3} />
-            <text x={tx} y={ty} className="wheel-chord" textAnchor="middle" dominantBaseline="central">
+            <text aria-hidden="true" x={tx} y={ty} className="wheel-chord" textAnchor="middle" dominantBaseline="central">
               {hidden ? '?' : sym(c, tetrad)}
             </text>
-            <text x={rx} y={ry} className="wheel-roman" textAnchor="middle" dominantBaseline="central">
+            <text aria-hidden="true" x={rx} y={ry} className="wheel-roman" textAnchor="middle" dominantBaseline="central">
               {romanOf(c, tetrad)}
             </text>
           </g>
@@ -207,15 +223,15 @@ export function CircleOfFifths({ field, tetrad, study, onPlay, lang, pref }: { f
       const [tx, ty] = polar((r0 + r1) / 2, (a0 + a1) / 2);
       const small = key !== 'out' ? 'circle-small' : '';
       return (
-        <g key={`${key}-${i}`} className={`slice${c ? ' active' : ''}`} onClick={() => c && (hidden ? study.reveal(id) : onPlay(c))}>
+        <g key={`${key}-${i}`} className={`slice${c ? ' active' : ''}`} {...(c ? asButton(chordLabel(c, tetrad, hidden), () => (hidden ? study.reveal(id) : onPlay(c))) : { 'aria-hidden': true as const })}>
           <path d={sector(r0, r1, a0, a1)} fill={fill} opacity={c ? (hidden ? 0.5 : 0.95) : undefined} className={c ? 'on' : 'off'} />
           {c ? (
             <>
-              <text x={tx} y={ty - 5} className={`circle-roman ${small}`} textAnchor="middle" dominantBaseline="central">
+              <text aria-hidden="true" x={tx} y={ty - 5} className={`circle-roman ${small}`} textAnchor="middle" dominantBaseline="central">
                 {hidden ? '?' : romanOf(c, tetrad)}
               </text>
               {!hidden && (
-                <text x={tx} y={ty + 9} className="circle-note" textAnchor="middle" dominantBaseline="central">
+                <text aria-hidden="true" x={tx} y={ty + 9} className="circle-note" textAnchor="middle" dominantBaseline="central">
                   {sym(c, tetrad)}
                 </text>
               )}
@@ -231,7 +247,7 @@ export function CircleOfFifths({ field, tetrad, study, onPlay, lang, pref }: { f
 
   return (
     <div className="circle-block">
-      <svg className="circle5" viewBox="-210 -210 420 420" role="img" aria-label="Círculo das quintas">
+      <svg className="circle5" viewBox="-210 -210 420 420" role="group" aria-label={`Círculo das quintas com o campo de ${noteLabel(field.scale.root, lang)} ${shortName(field.def)}`}>
         {ring('out', (pc) => labelMajor(pc))}
         {ring('mid', (pc, i) => labelMinor(pc, i))}
         {ring('inn', (pc, i) => labelDim(pc, i))}

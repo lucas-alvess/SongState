@@ -1,4 +1,6 @@
-import { memo, useMemo, useRef } from 'react';
+import { memo, useId, useMemo, useRef, useState } from 'react';
+import { pcAt, pcLabel, stringNumber } from '../lib/music';
+import { useSettings } from '../lib/storage';
 
 export type MarkerKind = 'root' | 'scale' | 'chord' | 'ghost' | 'target' | 'correct' | 'wrong' | 'hint';
 
@@ -19,7 +21,11 @@ interface Props {
   markers: Marker[];
   stringsOff?: number[];
   onCell?: (string: number, fret: number) => void;
+  /** Em exercícios, os nomes das notas não são lidos em voz alta (entregariam a resposta). */
+  quiz?: boolean;
 }
+
+const KIND_TEXT: Partial<Record<MarkerKind, string>> = { root: 'tônica', scale: 'da escala', chord: 'do acorde', target: 'alvo', correct: 'correta', wrong: 'errada', hint: 'dica' };
 
 const HALO = new Set<MarkerKind>(['root', 'chord', 'target', 'correct', 'wrong']);
 const INLAY_SINGLE = [3, 5, 7, 9, 15, 17, 19, 21];
@@ -69,7 +75,7 @@ function useGeometry(tuning: number[], a: number, b: number, vertical: boolean, 
 
 type Geo = ReturnType<typeof useGeometry>;
 
-function FretboardImpl({ tuning, fretMin = 0, fretMax, vertical, leftHanded, markers, stringsOff = NONE, onCell }: Props) {
+function FretboardImpl({ tuning, fretMin = 0, fretMax, vertical, leftHanded, markers, stringsOff = NONE, onCell, quiz }: Props) {
   const a = fretMin;
   const b = fretMax;
   const g = useGeometry(tuning, a, b, vertical, leftHanded);
@@ -79,6 +85,58 @@ function FretboardImpl({ tuning, fretMin = 0, fretMax, vertical, leftHanded, mar
   // o clique chama sempre a versão mais recente do handler, sem refazer as áreas de toque
   const cellRef = useRef(onCell);
   cellRef.current = onCell;
+
+  // ---- teclado e leitores de tela: um cursor único (em vez de 150 elementos focáveis) ----
+  const { settings } = useSettings();
+  const helpId = useId();
+  const [cur, setCur] = useState({ s: tuning.length - 1, f: a });
+  const [said, setSaid] = useState('');
+  const markersRef = useRef(markers);
+  markersRef.current = markers;
+
+  const describeCell = (s: number, f: number) => {
+    const base = `Corda ${stringNumber(s, tuning.length)}, casa ${f}`;
+    if (quiz) return base;
+    const note = pcLabel(pcAt(tuning, s, f), settings.pref, settings.lang);
+    const mk = markersRef.current.find((m) => m.string === s && m.fret === f && m.kind !== 'ghost');
+    return `${base}, ${note}${mk ? `, marcada${KIND_TEXT[mk.kind] ? ` (${KIND_TEXT[mk.kind]})` : ''}` : ''}`;
+  };
+  const usable = (s: number) => s >= 0 && s < tuning.length && !stringsOff.includes(s);
+  const clampCur = (c: { s: number; f: number }) => ({ s: usable(c.s) ? c.s : [...tuning.keys()].reverse().find(usable) ?? 0, f: Math.min(b, Math.max(a, c.f)) });
+  const here = clampCur(cur);
+
+  const onKey = (e: React.KeyboardEvent<SVGSVGElement>) => {
+    if (!hasCell || e.altKey || e.ctrlKey || e.metaKey) return;
+    let { s, f } = here;
+    const sign = leftHanded && !vertical ? -1 : 1; // braço espelhado: a direita é o lado do nut
+    const stepString = (d: number) => {
+      let n = s + d;
+      while (n >= 0 && n < tuning.length && !usable(n)) n += d;
+      if (usable(n)) s = n;
+    };
+    switch (e.key) {
+      case vertical ? 'ArrowDown' : 'ArrowRight': f += sign; break;
+      case vertical ? 'ArrowUp' : 'ArrowLeft': f -= sign; break;
+      case vertical ? 'ArrowRight' : 'ArrowUp': stepString(vertical && leftHanded ? -1 : 1); break;
+      case vertical ? 'ArrowLeft' : 'ArrowDown': stepString(vertical && leftHanded ? 1 : -1); break;
+      case 'Home': f = a; break;
+      case 'End': f = b; break;
+      case 'PageUp': f += 5; break;
+      case 'PageDown': f -= 5; break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        cellRef.current?.(here.s, here.f);
+        setSaid(`${describeCell(here.s, here.f)}, selecionada`);
+        return;
+      default:
+        return;
+    }
+    e.preventDefault();
+    f = Math.min(b, Math.max(a, f));
+    setCur({ s, f });
+    setSaid(describeCell(s, f));
+  };
 
   // camada fixa: madeira, marcações, trastes, cordas e números (não muda ao trocar de nota)
   const structure = useMemo(() => {
@@ -135,11 +193,14 @@ function FretboardImpl({ tuning, fretMin = 0, fretMax, vertical, leftHanded, mar
         const [u1, u2] = cellBounds(f);
         const [xa, ya] = P(u1, wOf(s) - SS / 2);
         const [xb, yb] = P(u2, wOf(s) + SS / 2);
-        out.push(<rect key={`c${s}-${f}`} x={Math.min(xa, xb)} y={Math.min(ya, yb)} width={Math.abs(xb - xa)} height={Math.abs(yb - ya)} className="fb-hit" onClick={() => cellRef.current?.(s, f)} />);
+        out.push(<rect key={`c${s}-${f}`} x={Math.min(xa, xb)} y={Math.min(ya, yb)} width={Math.abs(xb - xa)} height={Math.abs(yb - ya)} className="fb-hit" onClick={() => {
+          setCur({ s, f });
+          cellRef.current?.(s, f);
+        }} />);
       }
     }
     return out;
-  }, [g, offKey, hasCell]);
+  }, [g, offKey, hasCell]); // eslint-disable-line react-hooks/exhaustive-deps -- setCur é estável
 
   // camada das notas: a única que muda quando você troca escala, posição ou filtros
   const notes = useMemo(() => {
@@ -162,12 +223,50 @@ function FretboardImpl({ tuning, fretMin = 0, fretMax, vertical, leftHanded, mar
     });
   }, [markers, g, a, b]);
 
+  const ring = (() => {
+    if (!hasCell) return null;
+    const { SS, P, wOf, cellBounds } = g as Geo;
+    const [u1, u2] = cellBounds(here.f);
+    const [xa, ya] = P(u1, wOf(here.s) - SS / 2);
+    const [xb, yb] = P(u2, wOf(here.s) + SS / 2);
+    return <rect className="fb-cursor" x={Math.min(xa, xb) + 1.5} y={Math.min(ya, yb) + 1.5} width={Math.abs(xb - xa) - 3} height={Math.abs(yb - ya) - 3} rx={6} />;
+  })();
+
+  // sem interação: resumo do que está destacado, para quem não enxerga o desenho
+  const summary = useMemo(() => {
+    if (hasCell || quiz) return 'Braço da guitarra';
+    const shown = markers.filter((m) => m.kind !== 'ghost' && m.fret >= a && m.fret <= b && m.string < tuning.length);
+    const list = shown.slice(0, 40).map((m) => `corda ${stringNumber(m.string, tuning.length)} casa ${m.fret}${m.label ? ` ${m.label}` : ''}`);
+    return `Braço da guitarra, casas ${a} a ${b}.${list.length ? ` Notas destacadas: ${list.join('; ')}${shown.length > list.length ? ` e mais ${shown.length - list.length}` : ''}.` : ''}`;
+  }, [markers, hasCell, quiz, a, b, tuning.length]);
+
   return (
-    <svg className="fretboard" viewBox={`0 0 ${g.vbW} ${g.vbH}`} style={vertical ? { maxWidth: 440 } : { minWidth: Math.min(g.vbW, g.nF * 46 + 80) }} role="img" aria-label="Braço da guitarra">
-      {structure}
-      {hits}
-      {notes}
-    </svg>
+    <>
+      <svg
+        className="fretboard"
+        viewBox={`0 0 ${g.vbW} ${g.vbH}`}
+        style={vertical ? { maxWidth: 440 } : { minWidth: Math.min(g.vbW, g.nF * 46 + 80) }}
+        {...(hasCell
+          ? { role: 'group', tabIndex: 0, 'aria-label': `Braço da guitarra interativo. Corda ${stringNumber(here.s, tuning.length)}, casa ${here.f} em foco.`, 'aria-describedby': helpId, onKeyDown: onKey }
+          : { role: 'img', 'aria-label': summary })}
+      >
+        {structure}
+        {hits}
+        {notes}
+        {ring}
+      </svg>
+      {hasCell && (
+        <>
+          <span id={helpId} className="sr-only">
+            Use as setas para mover entre cordas e casas, Home e End para ir à primeira e à última casa, Enter ou espaço para selecionar.
+            {vertical ? ' Neste braço vertical, as setas para cima e para baixo mudam a casa.' : ''}
+          </span>
+          <span className="sr-only" role="status" aria-live="polite">
+            {said}
+          </span>
+        </>
+      )}
+    </>
   );
 }
 
