@@ -27,14 +27,20 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
-body {
+body { min-height: 100vh; }
+/* degradês numa camada fixa própria: a GPU só a move, em vez de repintar o fundo a cada quadro da rolagem
+   (background-attachment: fixed forçava repintura total e deixava o celular lento) */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background:
     radial-gradient(900px 520px at 90% -12%, rgba(139, 92, 246, 0.22), transparent 60%),
     radial-gradient(700px 420px at -8% 8%, rgba(34, 211, 238, 0.12), transparent 60%),
-    radial-gradient(600px 400px at 50% 110%, rgba(236, 72, 153, 0.09), transparent 60%),
-    var(--bg);
-  background-attachment: fixed;
-  min-height: 100vh;
+    radial-gradient(600px 400px at 50% 110%, rgba(236, 72, 153, 0.09), transparent 60%);
+  transform: translateZ(0);
 }
 h1, h2, h3, h4 { font-family: 'Space Grotesk', Inter, sans-serif; margin: 0 0 6px; letter-spacing: -0.015em; line-height: 1.2; }
 h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); }
@@ -53,7 +59,7 @@ code { font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; backgrou
 
 /* ---------- Layout ---------- */
 .app { min-height: 100vh; }
-.topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 18px; padding: 10px 28px; background: rgba(9, 9, 18, 0.78); backdrop-filter: blur(16px) saturate(1.4); border-bottom: 1px solid var(--border); }
+.topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 18px; padding: 10px 28px; background: rgba(9, 9, 18, 0.96); border-bottom: 1px solid var(--border); }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-family: 'Space Grotesk', sans-serif; font-weight: 500; font-size: 1.25rem; }
 .brand b { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .logo { width: 30px; height: 30px; border-radius: 10px; background: var(--grad); position: relative; box-shadow: 0 4px 16px rgba(139, 92, 246, 0.5); }
@@ -153,7 +159,7 @@ details[open] > summary::before { content: '▾ '; }
 .scale-board .controls { margin-bottom: 14px; }
 .scale-info { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; padding-top: 8px; border-top: 1px dashed var(--border); }
 .scale-info b { font-family: 'Space Grotesk', sans-serif; font-size: 1.08rem; background: var(--grad-cool); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.board-wrap { background: radial-gradient(120% 140% at 50% 0%, #17112a, #0b0b18); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 16px; box-shadow: var(--shadow), inset 0 0 70px rgba(139, 92, 246, 0.07); }
+.board-wrap { background: radial-gradient(120% 140% at 50% 0%, #17112a, #0b0b18); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 16px; box-shadow: var(--shadow); }
 .board-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .fretboard { display: block; width: 100%; height: auto; margin: 0 auto; user-select: none; touch-action: manipulation; }
 .fb-wood { fill: url(#g-wood); stroke: #382a52; stroke-width: 1; }
@@ -164,17 +170,24 @@ details[open] > summary::before { content: '▾ '; }
 .fb-string.off { opacity: 0.16; }
 .fb-num { fill: var(--muted); font-size: 12px; font-family: 'Space Grotesk', sans-serif; }
 .fb-hit { fill: transparent; cursor: pointer; }
-.fb-hit:hover { fill: rgba(139, 92, 246, 0.2); }
-.mk circle { fill: var(--mk, url(#g-scale)); stroke: rgba(255, 255, 255, 0.4); stroke-width: 1.5; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55)); pointer-events: none; }
-.mk text { fill: #fff; font-weight: 700; font-family: 'Space Grotesk', Inter, sans-serif; pointer-events: none; paint-order: stroke; stroke: rgba(0, 0, 0, 0.4); stroke-width: 2px; }
-.mk-root circle { fill: url(#g-root); stroke: #fff; stroke-width: 2.4; filter: drop-shadow(0 0 7px rgba(236, 72, 153, 0.85)); }
-.mk-chord circle { fill: var(--mk, url(#g-chord)); stroke: #fff3c4; filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.7)); }
+@media (hover: hover) { .fb-hit:hover { fill: rgba(139, 92, 246, 0.2); } }
+.mk circle { fill: var(--mk, url(#g-scale)); stroke: rgba(255, 255, 255, 0.4); stroke-width: 1.5; pointer-events: none; }
+.mk text { fill: #fff; font-weight: 700; font-family: 'Space Grotesk', Inter, sans-serif; pointer-events: none; }
+.mk-root circle { fill: url(#g-root); stroke: #fff; stroke-width: 2.4; }
+.mk-chord circle { fill: var(--mk, url(#g-chord)); stroke: #fff3c4; }
 .mk-chord text { fill: #261600; stroke: none; }
 .mk-ghost circle { fill: #19122a; stroke: rgba(255, 255, 255, 0.13); stroke-width: 1; filter: none; }
 .mk-ghost text { fill: rgba(190, 190, 230, 0.55); stroke: none; font-weight: 500; }
-.mk-target circle { fill: rgba(34, 211, 238, 0.18); stroke: var(--cyan); stroke-width: 2.4; stroke-dasharray: 4 3; filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.5)); }
-.mk-correct circle { fill: url(#g-ok); stroke: #a7f3d0; filter: drop-shadow(0 0 7px rgba(52, 211, 153, 0.7)); }
-.mk-wrong circle { fill: url(#g-bad); stroke: #fecdd3; filter: drop-shadow(0 0 7px rgba(251, 113, 133, 0.7)); }
+.mk-target circle { fill: rgba(34, 211, 238, 0.18); stroke: var(--cyan); stroke-width: 2.4; stroke-dasharray: 4 3; }
+.mk-correct circle { fill: url(#g-ok); stroke: #a7f3d0; }
+.mk-wrong circle { fill: url(#g-bad); stroke: #fecdd3; }
+/* brilho das notas em destaque: um círculo vetorial translúcido (barato) no lugar do filtro de sombra */
+.mk .halo { fill: var(--halo, #ec4899); opacity: 0.3; stroke: none; }
+.mk-root { --halo: #ec4899; }
+.mk-chord { --halo: #fbbf24; }
+.mk-target { --halo: #22d3ee; }
+.mk-correct { --halo: #34d399; }
+.mk-wrong { --halo: #fb7185; }
 .filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 4px 22px; }
 .filters-grid .toggles { grid-column: 1 / -1; }
 .range-row { display: flex; gap: 8px; }
@@ -331,7 +344,7 @@ details[open] > summary::before { content: '▾ '; }
   .nav-links { display: none; }
   .brand { flex: 1; }
   .content { padding: 16px 12px calc(88px + var(--safe-b)); }
-  .tabbar { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; bottom: 0; left: 0; right: 0; z-index: 30; background: rgba(12, 12, 24, 0.94); backdrop-filter: blur(18px); border-top: 1px solid var(--border); padding: 6px 4px calc(6px + var(--safe-b)); }
+  .tabbar { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; bottom: 0; left: 0; right: 0; z-index: 30; background: rgba(12, 12, 24, 0.98); border-top: 1px solid var(--border); padding: 6px 4px calc(6px + var(--safe-b)); }
   .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 0; font: inherit; font-size: 0.66rem; font-weight: 500; color: var(--muted); text-decoration: none; background: none; border: 0; border-radius: 12px; cursor: pointer; }
   .tab.active { color: #fff; background: var(--surface-2); }
   .tab.active .icon { color: var(--magenta); }
@@ -354,7 +367,7 @@ details[open] > summary::before { content: '▾ '; }
 }
 
 /* ---------- Reprodutor fixo (YouTube / Spotify) ---------- */
-.dock { position: fixed; right: 20px; bottom: 20px; z-index: 40; width: 392px; max-width: calc(100vw - 24px); background: rgba(16, 16, 34, 0.96); backdrop-filter: blur(18px); border: 1px solid var(--border-2); border-radius: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 44px rgba(139, 92, 246, 0.22); overflow: hidden; }
+.dock { position: fixed; right: 20px; bottom: 20px; z-index: 40; width: 392px; max-width: calc(100vw - 24px); background: rgba(16, 16, 34, 0.98); border: 1px solid var(--border-2); border-radius: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 44px rgba(139, 92, 246, 0.22); overflow: hidden; }
 body.has-dock .content { padding-bottom: 340px; }
 .dock-body { display: flex; flex-direction: column; }
 .dock-body.embed { padding: 12px; gap: 8px; }

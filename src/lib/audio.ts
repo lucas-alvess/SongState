@@ -1,12 +1,33 @@
 let ctx: AudioContext | null = null;
 
-export function getCtx(): AudioContext {
+function create() {
   if (!ctx) {
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     ctx = new AC();
   }
-  if (ctx.state === 'suspended') void ctx.resume();
   return ctx;
+}
+
+export function getCtx(): AudioContext {
+  const c = create();
+  if (c.state === 'suspended') void c.resume();
+  return c;
+}
+
+/**
+ * Cria o AudioContext (e o buffer de ruído) em tempo ocioso. Criar o contexto no primeiro toque
+ * custava dezenas de ms na hora do clique; assim ele já está pronto, só "suspenso" até o 1º gesto.
+ */
+export function warmAudio() {
+  const run = () => {
+    try {
+      noiseBuffer(create());
+    } catch {
+      /* sem suporte a áudio: ignora */
+    }
+  };
+  if ('requestIdleCallback' in window) window.requestIdleCallback(run, { timeout: 2500 });
+  else setTimeout(run, 400);
 }
 
 export const midiToFreq = (m: number) => 440 * Math.pow(2, (m - 69) / 12);

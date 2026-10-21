@@ -16,7 +16,7 @@ import {
   type ChordMatch,
 } from '../lib/chords';
 import { INTERVAL_NAMES, mod12, pcAt, pcLabel, tuningById } from '../lib/music';
-import { strum } from '../lib/audio';
+import { strum, warmAudio } from '../lib/audio';
 import { useLocalStorage, useSettings, useVertical } from '../lib/storage';
 
 const OPEN_C = [-1, 3, 2, 0, 1, 0];
@@ -60,29 +60,41 @@ export function Chords() {
   const bassPc = pcs[0];
   const matches = useMemo(() => (pcs.length >= 2 ? detectChords(pcs, bassPc) : []), [pcs.join(','), bassPc]); // eslint-disable-line react-hooks/exhaustive-deps
   const main: ChordMatch | undefined = matches[Math.min(alt, matches.length - 1)];
-  const notes = main ? chordNotes(main.rootPc, main.type, pref) : [];
-  const tokenByPc = new Map(notes.map((n) => [n.pc, n.token]));
+  const notes = useMemo(() => (main ? chordNotes(main.rootPc, main.type, pref) : []), [main, pref]);
+
+  // refs para os handlers ficarem estáveis (o braço e os diagramas não são redesenhados à toa)
+  const selRef = useRef(sel);
+  selRef.current = sel;
+  const soundRef = useRef(prefs.sound);
+  soundRef.current = prefs.sound;
+  useEffect(() => {
+    if (prefs.sound) warmAudio();
+  }, [prefs.sound]);
   const uniquePcs = [...new Set(pcs)];
 
   const toggle = useCallback(
     (s: number, f: number) => {
-      const next = sel.map((x, i) => (i === s ? (x === f ? -1 : f) : x));
-      setSel(next);
-      if (prefs.sound && next[s] === f) strum([tuning[s] + f], 0);
+      const adding = selRef.current[s] !== f;
+      setSel((cur) => cur.map((x, i) => (i === s ? (x === f ? -1 : f) : x)));
+      if (soundRef.current && adding) strum([tuning[s] + f], 0);
     },
-    [sel, prefs.sound, tuning],
+    [tuning],
   );
 
-  const markers: Marker[] = [];
-  for (let s = 0; s < N; s++)
-    for (let f = 0; f <= prefs.fretMax; f++) {
-      const pc = pcAt(tuning, s, f);
-      if (sel[s] === f) {
-        const isRoot = main && pc === main.rootPc;
-        const label = prefs.labels === 'degree' && tokenByPc.has(pc) ? tokenByPc.get(pc) : pcLabel(pc, pref, lang);
-        markers.push({ string: s, fret: f, kind: isRoot ? 'root' : 'chord', label });
-      } else markers.push({ string: s, fret: f, kind: 'ghost', label: pcLabel(pc, pref, lang) });
-    }
+  const markers = useMemo(() => {
+    const tokenByPc = new Map(notes.map((n) => [n.pc, n.token]));
+    const out: Marker[] = [];
+    for (let s = 0; s < N; s++)
+      for (let f = 0; f <= prefs.fretMax; f++) {
+        const pc = pcAt(tuning, s, f);
+        if (sel[s] === f) {
+          const isRoot = main && pc === main.rootPc;
+          const label = prefs.labels === 'degree' && tokenByPc.has(pc) ? tokenByPc.get(pc) : pcLabel(pc, pref, lang);
+          out.push({ string: s, fret: f, kind: isRoot ? 'root' : 'chord', label });
+        } else out.push({ string: s, fret: f, kind: 'ghost', label: pcLabel(pc, pref, lang) });
+      }
+    return out;
+  }, [N, tuning, prefs.fretMax, prefs.labels, sel, main, notes, pref, lang]);
 
   const play = () => strum(played.map((s) => tuning[s] + sel[s]));
 
@@ -91,11 +103,14 @@ export function Chords() {
   const voicings = useMemo(() => findVoicings(dictRoot, dType, tuning, 8), [dictRoot, dType, tuning]);
   const dNotes = chordNotes(dictRoot, dType, pref);
 
-  const load = (frets: number[]) => {
-    setSel(frets);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (prefs.sound) strum(frets.map((f, s) => (f >= 0 ? tuning[s] + f : -1)).filter((m) => m >= 0));
-  };
+  const load = useCallback(
+    (frets: number[]) => {
+      setSel(frets);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (soundRef.current) strum(frets.map((f, s) => (f >= 0 ? tuning[s] + f : -1)).filter((m) => m >= 0));
+    },
+    [tuning],
+  );
 
   const showInDictionary = (m: ChordMatch) => {
     setDictRoot(m.rootPc);
@@ -227,7 +242,7 @@ export function Chords() {
           <p className="muted small-text">Toque em uma digitação para vê-la no braço e ouvir. Pontos rosa são a tônica; “x” corda não tocada; “o” corda solta.</p>
           <div className="diagram-grid">
             {voicings.map((v, i) => (
-              <ChordDiagram key={i} frets={v.frets} tuning={tuning} rootPc={dictRoot} active={v.frets.join() === sel.join()} onClick={() => load(v.frets)} />
+              <ChordDiagram key={i} frets={v.frets} tuning={tuning} rootPc={dictRoot} active={v.frets.join() === sel.join()} onPick={load} />
             ))}
           </div>
         </>

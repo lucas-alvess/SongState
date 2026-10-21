@@ -1,10 +1,11 @@
+import { memo } from 'react';
 import { mod12 } from '../lib/music';
 
 interface Props {
   frets: number[]; // -1 = não tocada
   tuning: number[];
   rootPc: number;
-  onClick?: () => void;
+  onPick?: (frets: number[]) => void;
   active?: boolean;
 }
 
@@ -13,7 +14,7 @@ const FH = 17; // altura da casa
 const ROWS = 5;
 
 /** Diagrama de acorde (vertical, cordas graves à esquerda). */
-export function ChordDiagram({ frets, tuning, rootPc, onClick, active }: Props) {
+function ChordDiagramImpl({ frets, tuning, rootPc, onPick, active }: Props) {
   const N = tuning.length;
   const fretted = frets.filter((f) => f > 0);
   const maxF = fretted.length ? Math.max(...fretted) : 0;
@@ -27,7 +28,7 @@ export function ChordDiagram({ frets, tuning, rootPc, onClick, active }: Props) 
   const y = (f: number) => padT + (f - base + 0.5) * FH;
 
   return (
-    <button type="button" className={`diagram${active ? ' active' : ''}`} onClick={onClick}>
+    <button type="button" className={`diagram${active ? ' active' : ''}`} onClick={() => onPick?.(frets)}>
       <svg viewBox={`0 0 ${w} ${h}`} width="100%" role="img" aria-label="Diagrama de acorde">
         {base === 1 ? (
           <rect x={x(0) - 1} y={padT - 3} width={(N - 1) * SS + 2} height={3.5} className="dg-nut" />
@@ -53,3 +54,5 @@ export function ChordDiagram({ frets, tuning, rootPc, onClick, active }: Props) 
     </button>
   );
 }
+
+export const ChordDiagram = memo(ChordDiagramImpl, (a, b) => a.active === b.active && a.rootPc === b.rootPc && a.tuning === b.tuning && a.onPick === b.onPick && a.frets.join() === b.frets.join());
