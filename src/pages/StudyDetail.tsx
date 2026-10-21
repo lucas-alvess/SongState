@@ -5,6 +5,7 @@ import { Metronome } from '../components/Metronome';
 import { DEFAULT_BOARD, ScaleBoard, type BoardState } from '../components/ScaleBoard';
 import { ALL_LESSONS, findLesson, type Lesson } from '../lib/curriculum';
 import { exerciseById } from '../lib/exercises';
+import { LessonExample } from '../components/LessonExample';
 import { useLocalStorage, useStoredList } from '../lib/storage';
 
 interface Progress {
@@ -83,10 +84,7 @@ function Detail({ lesson, crumb, prev, next, onDelete }: { lesson: Lesson; crumb
       )}
 
       {lesson.example?.map((e, i) => (
-        <section key={i} className="panel example">
-          {e.title && <h4>{e.title}</h4>}
-          <pre>{e.text}</pre>
-        </section>
+        <LessonExample key={i} title={e.title} text={e.text} bpm={lesson.bpm} />
       ))}
       {lesson.tip && (
         <div className="tip-box">

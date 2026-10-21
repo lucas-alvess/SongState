@@ -683,6 +683,7 @@ const BASE_LEVELS: Level[] = [
 ];
 
 import { CHAPTER_TITLES, EXTRA_LESSONS, LESSON_PATCHES, NEW_CHAPTERS } from './curriculum-extra';
+import { PLAYABLE_BY_LESSON } from './lesson-tabs';
 
 /** Junta o currículo base com os capítulos novos, as lições extras e os atalhos adicionados às lições existentes. */
 function composeLevels(base: Level[]): Level[] {
@@ -695,7 +696,8 @@ function composeLevels(base: Level[]): Level[] {
     const at = n.before ? lv.chapters.findIndex((c) => c.id === n.before) : -1;
     lv.chapters.splice(at < 0 ? lv.chapters.length : at, 0, n.chapter);
   }
-  for (const l of levels) for (const c of l.chapters) c.lessons = c.lessons.map((x) => ({ ...x, ...(LESSON_PATCHES[x.id] ?? {}) }));
+  // exemplos tocáveis (tablaturas e acordes) entram depois dos exemplos de texto de cada lição
+  for (const l of levels) for (const c of l.chapters) c.lessons = c.lessons.map((x) => ({ ...x, ...(LESSON_PATCHES[x.id] ?? {}), ...(PLAYABLE_BY_LESSON[x.id] ? { example: [...(LESSON_PATCHES[x.id]?.example ?? x.example ?? []), ...PLAYABLE_BY_LESSON[x.id]] } : {}) }));
   return levels;
 }
 

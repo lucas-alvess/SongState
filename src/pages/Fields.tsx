@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AllKeysTable, CircleOfFifths, COMPARE_DEFAULT, COMPARE_OPTIONS, CompareTable, FieldTable, FieldWheel, FuncLegend, autoPref, romanOf, sym, type Study } from '../components/FieldViews';
 import { Icon } from '../components/Icon';
 import { Chips, Field, PageHeader, RootChips, Toggle } from '../components/ui';
 import { strum } from '../lib/audio';
 import { FIELDS, FIELD_GROUPS, buildField, chordMidis, fieldById, parentMajor, signatureText, type FieldChord } from '../lib/harmony';
 import { noteLabel } from '../lib/music';
-import { useLocalStorage, useSettings } from '../lib/storage';
+import { MAX_PROGRESSION, fieldSong } from '../lib/fieldsong';
+import type { Song } from '../lib/songs';
+import { useLocalStorage, useSettings, useStoredList } from '../lib/storage';
 
 type View = 'tabela' | 'circulo' | 'roda' | 'tons' | 'comparar';
 interface Prefs {
@@ -27,6 +29,9 @@ export function Fields() {
   const patch = useCallback((x: Partial<Prefs>) => setP((s) => ({ ...s, ...x })), [setP]);
   const [params, setParams] = useSearchParams();
   const [shown, setShown] = useState<Set<string>>(new Set());
+  const [mine, setMine] = useState<number[]>([]); // progressão montada pelo usuário (graus)
+  const nav = useNavigate();
+  const [, setSongs] = useStoredList<Song>('ss.songs');
   const timers = useRef<number[]>([]);
 
   // links das lições: #/campos?root=0&field=major&view=circulo
@@ -52,6 +57,18 @@ export function Fields() {
     timers.current = chords.map((c, i) => window.setTimeout(() => playChord(c), i * 850));
   };
   const hearField = () => playSeq([...field.chords, field.chords[0]]);
+
+  /** Cria (ou reaproveita) uma música com a progressão e abre no Backing, no tom escolhido. */
+  const toBacking = (degrees: number[], note?: string) => {
+    const song = fieldSong(field, degrees, p.tetrad, lang, note);
+    if (!song) return;
+    setSongs((l) => (l.some((x) => x.id === song.id) ? l : [song, ...l]));
+    if (!(localStorage.getItem('ss.songs') ?? '').includes(`"${song.id}"`)) {
+      alert('Não foi possível salvar a música: o armazenamento do navegador está cheio. Faça um backup em Dados e libere espaço.');
+      return;
+    }
+    nav(`/backing/${song.id}`);
+  };
 
   const views: { value: View; label: string }[] = [
     { value: 'tabela', label: 'Tabela' },
@@ -178,9 +195,14 @@ export function Fields() {
             <div key={pr.name} className="prog-card">
               <div className="row between">
                 <b>{pr.name}</b>
-                <button type="button" className="btn small" onClick={() => playSeq(chords)}>
-                  <Icon name="play" size={13} /> Ouvir
-                </button>
+                <div className="row gap">
+                  <button type="button" className="btn small" onClick={() => playSeq(chords)}>
+                    <Icon name="play" size={13} /> Ouvir
+                  </button>
+                  <button type="button" className="btn small primary" onClick={() => toBacking(pr.degrees, pr.note)} title="Abre no Backing, tocando com bateria, baixo e acordes, neste tom">
+                    <Icon name="headphones" size={13} /> Tocar na base
+                  </button>
+                </div>
               </div>
               <div className="prog-chords">
                 {chords.map((c, i) => (
@@ -195,6 +217,43 @@ export function Fields() {
           );
         })}
       </div>
+
+      <h2 className="section-title">Monte a sua progressão</h2>
+      <section className="panel">
+        <p className="muted small-text" style={{ marginTop: 0 }}>
+          Toque nos graus para montar uma sequência (até {MAX_PROGRESSION} acordes, um por compasso). Ela toca no tom de {noteLabel(field.scale.root, lang)} escolhido acima e fica salva em Backing → Minha biblioteca, onde você pode excluí-la quando quiser.
+        </p>
+        <div className="chips" role="group" aria-label="Acordes do campo">
+          {field.chords.map((c) => (
+            <button key={c.degree} type="button" className="chip" disabled={mine.length >= MAX_PROGRESSION} aria-label={`Adicionar ${romanOf(c, p.tetrad)}, ${sym(c, p.tetrad)}`} onClick={() => setMine((m) => [...m, c.degree].slice(0, MAX_PROGRESSION))}>
+              <b>{romanOf(c, p.tetrad)}</b> <span className="muted">{sym(c, p.tetrad)}</span>
+            </button>
+          ))}
+        </div>
+        <div className="prog-chords my-prog" aria-live="polite" aria-label="Sua progressão">
+          {mine.length === 0 && <span className="muted small-text">Nenhum acorde ainda.</span>}
+          {mine.map((d, i) => (
+            <span key={i} className={`prog-chord func-${field.chords[d - 1].func ?? 'none'}`}>
+              <b>{sym(field.chords[d - 1], p.tetrad)}</b>
+              <small>{romanOf(field.chords[d - 1], p.tetrad)}</small>
+            </span>
+          ))}
+        </div>
+        <div className="row gap wrap">
+          <button type="button" className="btn small" disabled={!mine.length} onClick={() => playSeq(mine.map((d) => field.chords[d - 1]))}>
+            <Icon name="play" size={13} /> Ouvir
+          </button>
+          <button type="button" className="btn small" disabled={!mine.length} onClick={() => setMine((m) => m.slice(0, -1))}>
+            Desfazer último
+          </button>
+          <button type="button" className="btn small" disabled={!mine.length} onClick={() => setMine([])}>
+            Limpar
+          </button>
+          <button type="button" className="btn small primary" disabled={!mine.length} onClick={() => toBacking(mine, 'Progressão montada por você.')}>
+            <Icon name="headphones" size={13} /> Tocar na base
+          </button>
+        </div>
+      </section>
 
       <h2 className="section-title">Como memorizar</h2>
       <section className="panel">
