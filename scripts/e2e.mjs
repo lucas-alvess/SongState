@@ -38,10 +38,12 @@ const BASE = `http://127.0.0.1:${server.address().port}/`;
 const TMP = mkdtempSync(join(tmpdir(), 'songstate-e2e-'));
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const oneLine = (v) => String(v).slice(0, 400).split(/s+/).join(' ');
 let failures = 0;
 let suite = '';
 const ok = (name, cond, extra = '') => {
   console.log(`${cond ? 'ok   ' : 'FALHA'} [${suite}] ${name}${cond || !extra ? '' : ` — ${extra}`}`);
+  if (!cond && process.env.GITHUB_ACTIONS) console.log(`::error title=e2e ${suite}::${name} ${oneLine(extra)}`);
   if (!cond) failures++;
 };
 async function waitFor(fn, ms = 10000, step = 100) {
@@ -344,6 +346,7 @@ for (const name of wanted.length ? wanted : Object.keys(SUITES)) {
   } catch (e) {
     failures++;
     console.log(`FALHA [${name}] a suíte quebrou: ${e instanceof Error ? e.stack : e}`);
+    if (process.env.GITHUB_ACTIONS) console.log(`::error title=e2e ${name} quebrou::${oneLine(e instanceof Error ? e.message : e)}`);
   }
   console.log(`      [${name}] ${((Date.now() - t0) / 1000).toFixed(1)} s`);
 }
