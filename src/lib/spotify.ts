@@ -153,8 +153,15 @@ export interface SpotifyResult {
   thumb?: string;
 }
 
-export async function spotifySearch(q: string, limit = 12): Promise<SpotifyResult[]> {
-  const json = await api(`/search?${new URLSearchParams({ q, type: 'track,playlist', limit: String(limit) })}`);
+export async function spotifySearch(q: string, limit = 10): Promise<SpotifyResult[]> {
+  let json: any;
+  try {
+    json = await api(`/search?${new URLSearchParams({ q, type: 'track,playlist', limit: String(limit) })}`);
+  } catch (e) {
+    // o Spotify reduziu o limite máximo por busca em apps de desenvolvimento; tenta de novo com menos
+    if (/invalid limit/i.test((e as Error).message) && limit > 5) return spotifySearch(q, limit > 10 ? 10 : 5);
+    throw e;
+  }
   const tracks: SpotifyResult[] = (json.tracks?.items ?? []).filter(Boolean).map((t: any) => ({
     kind: 'track',
     id: t.id,
