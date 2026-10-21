@@ -12,6 +12,9 @@ export interface Source {
 
 export interface Song {
   id: string;
+  builtin?: boolean;
+  chart?: string; // cifra em texto: | Am | C G | ...
+  style?: 'rock' | 'shuffle' | 'ballad' | 'funk';
   title: string;
   artist: string;
   keyPc: number | null;
@@ -62,9 +65,6 @@ export function parseLink(raw: string, id: string): Source | null {
   }
   return { id, kind: 'link', label: 'Link', url };
 }
-
-export const youtubeSearch = (q: string) => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
-export const spotifySearch = (q: string) => `https://open.spotify.com/search/${encodeURIComponent(q)}`;
 
 /** Escalas sugeridas pela tonalidade da música. */
 export const suggestedScales = (minor: boolean) =>

@@ -75,10 +75,11 @@ export function RootChips({ value, onChange }: { value: number; onChange: (pc: n
   );
 }
 
-export function PageHeader({ title, sub, children }: { title: string; sub?: string; children?: ReactNode }) {
+export function PageHeader({ title, sub, eyebrow, children }: { title: string; sub?: string; eyebrow?: string; children?: ReactNode }) {
   return (
-    <header className="page-header">
+    <header className="page-header stacked">
       <div>
+        {eyebrow && <span className="eyebrow">{eyebrow}</span>}
         <h1>{title}</h1>
         {sub && <p className="muted">{sub}</p>}
       </div>

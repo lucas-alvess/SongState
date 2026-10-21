@@ -1,6 +1,8 @@
 import { Link, useParams } from 'react-router-dom';
-import { EXERCISES } from '../lib/studies';
+import { Icon } from '../components/Icon';
+import { exerciseById } from '../lib/exercises';
 import { FindAll, IntervalFind, IntervalId, NoteFind, NoteName, ScaleId, ScaleSpell, ShapeBuild } from './quizzes';
+import { ChordBuild, ChordSpell, EarChord, EarInterval } from './quizzes2';
 
 const RUNNERS: Record<string, () => React.JSX.Element> = {
   'note-name': NoteName,
@@ -11,21 +13,35 @@ const RUNNERS: Record<string, () => React.JSX.Element> = {
   'interval-find': IntervalFind,
   'shape-build': ShapeBuild,
   'scale-id': ScaleId,
+  'chord-spell': ChordSpell,
+  'chord-build': ChordBuild,
+  'ear-interval': EarInterval,
+  'ear-chord': EarChord,
 };
 
 export function ExerciseRunner() {
   const { id = '' } = useParams();
-  const meta = EXERCISES.find((e) => e.id === id);
+  const meta = exerciseById(id);
   const Runner = RUNNERS[id];
-  if (!meta || !Runner) return <p>Exercício não encontrado. <Link to="/exercicios">Voltar</Link></p>;
+  if (!meta || !Runner) {
+    return (
+      <p>
+        Exercício não encontrado. <Link to="/exercicios">Voltar</Link>
+      </p>
+    );
+  }
   return (
     <>
-      <Link to="/exercicios" className="back">← Exercícios</Link>
+      <Link to="/exercicios" className="back">
+        <Icon name="back" size={16} /> Exercícios
+      </Link>
       <header className="page-header">
         <div>
-          <h1>{meta.icon} {meta.title}</h1>
+          <span className="eyebrow">{meta.category}</span>
+          <h1>{meta.title}</h1>
           <p className="muted">{meta.desc}</p>
         </div>
+        <span className={`badge lvl-${meta.level}`}>{meta.level}</span>
       </header>
       <Runner />
     </>

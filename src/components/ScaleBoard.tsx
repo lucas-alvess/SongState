@@ -92,12 +92,12 @@ export function ScaleBoard({ state: st, setState, chordPcs, scaleIds, advanced =
         const inChord = chordSet?.has(pc) ?? false;
         if (!note) {
           if (inChord) out.push({ string: s, fret: f, kind: 'chord', label: pcLabel(pc, settings.pref, settings.lang) });
-          else if (st.ghost === 'all') out.push({ string: s, fret: f, kind: 'ghost' });
+          else if (st.ghost === 'all') out.push({ string: s, fret: f, kind: 'ghost', label: pcLabel(pc, settings.pref, settings.lang) });
           continue;
         }
         const shown = (!posSet || posSet.has(`${s}:${f}`)) && (st.degrees.length === 0 || st.degrees.includes(note.token));
         if (!shown) {
-          if (st.ghost !== 'off') out.push({ string: s, fret: f, kind: 'ghost' });
+          if (st.ghost !== 'off') out.push({ string: s, fret: f, kind: 'ghost', label: st.ghost === 'all' ? pcLabel(pc, settings.pref, settings.lang) : undefined });
           continue;
         }
         const isRoot = note.index === 0;

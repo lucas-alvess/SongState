@@ -1,8 +1,10 @@
 import { useCallback, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { DEFAULT_BOARD, ScaleBoard, type BoardState } from '../components/ScaleBoard';
+import { Icon } from '../components/Icon';
 import { Metronome } from '../components/Metronome';
-import { STUDIES, studyById, type Study } from '../lib/studies';
+import { DEFAULT_BOARD, ScaleBoard, type BoardState } from '../components/ScaleBoard';
+import { ALL_LESSONS, findLesson, type Lesson } from '../lib/curriculum';
+import { exerciseById } from '../lib/exercises';
 import { useLocalStorage, useStoredList } from '../lib/storage';
 
 interface Progress {
@@ -13,36 +15,72 @@ interface Progress {
 export function StudyDetail() {
   const { id = '' } = useParams();
   const nav = useNavigate();
-  const [custom, setCustom] = useStoredList<Study>('ss.studies');
-  const study = studyById(id, custom);
-  if (!study) return <p>Estudo não encontrado. <Link to="/exercicios">Voltar</Link></p>;
-  return <Detail key={study.id} study={study} onDelete={study.custom ? () => { setCustom((l) => l.filter((s) => s.id !== id)); nav('/exercicios'); } : undefined} />;
+  const [custom, setCustom] = useStoredList<Lesson>('ss.studies');
+  const found = findLesson(id, custom);
+  if (!found) {
+    return (
+      <p>
+        Estudo não encontrado. <Link to="/estudos">Voltar</Link>
+      </p>
+    );
+  }
+  const { lesson, level, chapter } = found;
+  const idx = ALL_LESSONS.findIndex((x) => x.lesson.id === id);
+  const prev = idx > 0 ? ALL_LESSONS[idx - 1].lesson : null;
+  const next = idx >= 0 && idx < ALL_LESSONS.length - 1 ? ALL_LESSONS[idx + 1].lesson : null;
+  return (
+    <Detail
+      key={lesson.id}
+      lesson={lesson}
+      crumb={level && chapter ? `${level.title} · ${chapter.title}` : 'Meus estudos'}
+      prev={prev}
+      next={next}
+      onDelete={
+        lesson.custom
+          ? () => {
+              setCustom((l) => l.filter((s) => s.id !== id));
+              nav('/estudos');
+            }
+          : undefined
+      }
+    />
+  );
 }
 
-function Detail({ study, onDelete }: { study: Study; onDelete?: () => void }) {
-  const [board, setBoardRaw] = useState<BoardState>({ ...DEFAULT_BOARD, ...study.board });
+function Detail({ lesson, crumb, prev, next, onDelete }: { lesson: Lesson; crumb: string; prev: Lesson | null; next: Lesson | null; onDelete?: () => void }) {
+  const [board, setBoardRaw] = useState<BoardState>({ ...DEFAULT_BOARD, ...lesson.board });
   const setBoard = useCallback((p: Partial<BoardState>) => setBoardRaw((b) => ({ ...b, ...p })), []);
-  const [progress, setProgress] = useLocalStorage<Progress>(`ss.study.${study.id}`, { done: [], sessions: [] });
-  const [bpm, setBpm] = useState(study.bpm);
+  const [progress, setProgress] = useLocalStorage<Progress>(`ss.study.${lesson.id}`, { done: [], sessions: [] });
+  const [bpm, setBpm] = useState(lesson.bpm);
 
   const toggle = (i: number) => {
     const done = [...progress.done];
     done[i] = !done[i];
     setProgress({ ...progress, done });
   };
-  const doneCount = study.steps.filter((_, i) => progress.done[i]).length;
-  const builtin = STUDIES.some((s) => s.id === study.id);
+  const doneCount = lesson.steps.filter((_, i) => progress.done[i]).length;
 
   return (
     <>
-      <Link to="/exercicios" className="back">← Exercícios</Link>
+      <Link to="/estudos" className="back">
+        <Icon name="back" size={16} /> Estudos
+      </Link>
       <header className="page-header">
         <div>
-          <h1>{study.title}</h1>
-          <p className="muted">{study.desc}</p>
+          <span className="eyebrow">{crumb}</span>
+          <h1>{lesson.title}</h1>
+          <p className="muted">{lesson.desc}</p>
         </div>
-        <span className={`badge lvl-${study.level}`}>{study.level}</span>
       </header>
+
+      {lesson.theory && lesson.theory.length > 0 && (
+        <section className="panel theory">
+          <h3>Conceito</h3>
+          {lesson.theory.map((t, i) => (
+            <p key={i}>{t}</p>
+          ))}
+        </section>
+      )}
 
       <ScaleBoard state={board} setState={setBoard} advanced={false} />
 
@@ -50,11 +88,15 @@ function Detail({ study, onDelete }: { study: Study; onDelete?: () => void }) {
         <section className="panel">
           <div className="row between">
             <h3>Passo a passo</h3>
-            <span className="muted">{doneCount}/{study.steps.length}</span>
+            <span className="muted">
+              {doneCount}/{lesson.steps.length}
+            </span>
           </div>
-          <div className="bar"><i style={{ width: `${(doneCount / Math.max(1, study.steps.length)) * 100}%` }} /></div>
+          <div className="bar">
+            <i style={{ width: `${(doneCount / Math.max(1, lesson.steps.length)) * 100}%` }} />
+          </div>
           <ul className="checklist">
-            {study.steps.map((s, i) => (
+            {lesson.steps.map((s, i) => (
               <li key={i}>
                 <label>
                   <input type="checkbox" checked={!!progress.done[i]} onChange={() => toggle(i)} />
@@ -71,22 +113,77 @@ function Detail({ study, onDelete }: { study: Study; onDelete?: () => void }) {
             <button type="button" className="btn primary" onClick={() => setProgress({ ...progress, sessions: [{ at: Date.now(), bpm }, ...progress.sessions].slice(0, 30) })}>
               Registrar sessão
             </button>
-            <button type="button" className="btn" onClick={() => setProgress({ ...progress, done: [] })}>Limpar checklist</button>
+            <button type="button" className="btn" onClick={() => setProgress({ ...progress, done: [] })}>
+              Limpar checklist
+            </button>
           </div>
           {progress.sessions.length > 0 && (
             <div className="sessions">
               <h4>Histórico ({progress.sessions.length})</h4>
               <ul>
                 {progress.sessions.slice(0, 5).map((s) => (
-                  <li key={s.at}>{new Date(s.at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} · {s.bpm} BPM</li>
+                  <li key={s.at}>
+                    {new Date(s.at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} · {s.bpm} BPM
+                  </li>
                 ))}
               </ul>
             </div>
           )}
-          {!builtin && onDelete && <button type="button" className="btn danger small" onClick={onDelete}>Excluir estudo</button>}
+          {onDelete && (
+            <button type="button" className="btn danger small" onClick={onDelete}>
+              <Icon name="trash" size={15} /> Excluir estudo
+            </button>
+          )}
         </section>
-        <Metronome initialBpm={study.bpm} />
+        <div>
+          <Metronome initialBpm={lesson.bpm} />
+          {(lesson.exercises?.length || lesson.chord || lesson.jam) && (
+            <section className="panel">
+              <h3>Pratique isto</h3>
+              <div className="link-list">
+                {lesson.exercises?.map((id) => {
+                  const ex = exerciseById(id);
+                  return ex ? (
+                    <Link key={id} to={`/exercicios/${id}`} className="link-row">
+                      <Icon name={ex.icon} size={18} /> {ex.title}
+                      <Icon name="arrow" size={16} />
+                    </Link>
+                  ) : null;
+                })}
+                {lesson.chord && (
+                  <Link to={`/acordes?root=${lesson.chord.root}&type=${lesson.chord.type}`} className="link-row">
+                    <Icon name="chord" size={18} /> Dicionário de acordes
+                    <Icon name="arrow" size={16} />
+                  </Link>
+                )}
+                {lesson.jam && (
+                  <Link to="/backing/jam" className="link-row">
+                    <Icon name="headphones" size={18} /> Jam tracks: tocar junto
+                    <Icon name="arrow" size={16} />
+                  </Link>
+                )}
+              </div>
+            </section>
+          )}
+        </div>
       </div>
+
+      {(prev || next) && (
+        <div className="lesson-nav">
+          {prev ? (
+            <Link to={`/estudos/${prev.id}`} className="btn">
+              <Icon name="back" size={16} /> {prev.title}
+            </Link>
+          ) : (
+            <span />
+          )}
+          {next && (
+            <Link to={`/estudos/${next.id}`} className="btn primary">
+              {next.title} <Icon name="arrow" size={16} />
+            </Link>
+          )}
+        </div>
+      )}
     </>
   );
 }

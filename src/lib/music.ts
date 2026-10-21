@@ -76,9 +76,9 @@ export const scaleById = (id: string) => SCALES.find((s) => s.id === id) ?? SCAL
 const MAJOR_SEMIS: Record<number, number> = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11 };
 
 export function tokenSemis(token: string): number {
-  const m = /^([b#]*)(\d)$/.exec(token)!;
+  const m = /^([b#]*)(\d+)$/.exec(token)!;
   const acc = [...m[1]].reduce((a, c) => a + (c === '#' ? 1 : -1), 0);
-  return mod12(MAJOR_SEMIS[+m[2]] + acc);
+  return mod12(MAJOR_SEMIS[((+m[2] - 1) % 7) + 1] + acc);
 }
 
 export const INTERVAL_TOKENS = ['1', 'b2', '2', 'b3', '3', '4', 'b5', '5', 'b6', '6', 'b7', '7'];
@@ -100,9 +100,10 @@ export interface Scale {
   byPc: Map<number, ScaleNote>;
 }
 
-export function buildScale(def: ScaleDef, rootPc: number, pref: AccPref): Scale {
+/** Nomeia as notas de uma fórmula (graus) sobre uma tônica, respeitando as letras (Eb G Bb, não D# G A#). */
+export function spellFormula(rootPc: number, formula: string[], pref: AccPref): ScaleNote[] {
   const root = pcSpelling(rootPc, pref);
-  const notes = def.formula.map((token, index) => {
+  return formula.map((token, index) => {
     const semis = tokenSemis(token);
     const pc = mod12(rootPc + semis);
     const degree = +token.replace(/[b#]/g, '');
@@ -111,6 +112,11 @@ export function buildScale(def: ScaleDef, rootPc: number, pref: AccPref): Scale 
     const spelled = Math.abs(acc) > 2 ? pcSpelling(pc, pref) : { letter, acc };
     return { index, token, semis, pc, spelled };
   });
+}
+
+export function buildScale(def: ScaleDef, rootPc: number, pref: AccPref): Scale {
+  const root = pcSpelling(rootPc, pref);
+  const notes = spellFormula(rootPc, def.formula, pref);
   return { def, rootPc, root, notes, byPc: new Map(notes.map((n) => [n.pc, n])) };
 }
 
