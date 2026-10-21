@@ -115,13 +115,22 @@ function SongView({ song }: { song: Song }) {
         </div>
       )}
 
-      {song.sources.length > 0 && src && (
-        <section className="panel player-panel">
+      <section className="panel player-panel">
+        <div className="row between">
           <h3>Áudio</h3>
-          {song.sources.length > 1 && <Chips small value={Math.min(srcIdx, song.sources.length - 1)} onChange={setSrcIdx} options={song.sources.map((s, i) => ({ value: i, label: s.label }))} />}
-          <SourcePlayer key={src.id} src={src} />
-        </section>
-      )}
+          <Link className="btn small" to={`/backing/buscar?q=${encodeURIComponent(`${song.title} ${song.artist}`.trim())}&song=${song.id}`}>
+            <Icon name="plus" size={14} /> {src ? 'Buscar outro áudio' : 'Buscar áudio'}
+          </Link>
+        </div>
+        {src ? (
+          <>
+            {song.sources.length > 1 && <Chips small value={Math.min(srcIdx, song.sources.length - 1)} onChange={setSrcIdx} options={song.sources.map((s, i) => ({ value: i, label: s.label }))} />}
+            <SourcePlayer key={src.id} src={src} title={song.title} />
+          </>
+        ) : (
+          <p className="muted">Procure a música no YouTube ou no Spotify e ouça aqui mesmo, com o braço e a cifra ao lado. Também dá para enviar um arquivo seu em “Editar”.</p>
+        )}
+      </section>
 
       <section>
         <h3 className="section-title">Escalas para esta música</h3>

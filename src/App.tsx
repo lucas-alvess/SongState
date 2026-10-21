@@ -11,6 +11,8 @@ import { ExerciseRunner } from './pages/ExerciseRunner';
 import { Chords } from './pages/Chords';
 import { Backing } from './pages/Backing';
 import { SongPage } from './pages/SongPage';
+import { Dock } from './components/Dock';
+import { PlayerProvider } from './lib/player';
 
 const NAV: { to: string; label: string; icon: IconName; end?: boolean }[] = [
   { to: '/', label: 'Braço', icon: 'fretboard', end: true },
@@ -28,6 +30,7 @@ export default function App() {
 
   return (
     <SettingsContext.Provider value={ctx}>
+      <PlayerProvider>
       <HashRouter>
         <GlobalDefs />
         <div className="app">
@@ -60,6 +63,7 @@ export default function App() {
               <Route path="/acordes" element={<Chords />} />
               <Route path="/backing" element={<Backing />} />
               <Route path="/backing/jam" element={<Backing jam />} />
+              <Route path="/backing/buscar" element={<Backing search />} />
               <Route path="/backing/:id" element={<SongPage />} />
             </Routes>
           </main>
@@ -71,9 +75,11 @@ export default function App() {
               </NavLink>
             ))}
           </nav>
+          <Dock />
           {open && <SettingsPanel onClose={() => setOpen(false)} />}
         </div>
       </HashRouter>
+      </PlayerProvider>
     </SettingsContext.Provider>
   );
 }

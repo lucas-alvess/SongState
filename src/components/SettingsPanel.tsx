@@ -1,4 +1,5 @@
 import { Chips, Field, Toggle } from './ui';
+import { Integrations } from './Integrations';
 import { TUNINGS } from '../lib/music';
 import { useSettings } from '../lib/storage';
 
@@ -54,6 +55,8 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
           />
         </Field>
         <Toggle label="Modo canhoto" checked={settings.leftHanded} onChange={(leftHanded) => update({ leftHanded })} />
+        <h3 className="section-title">Spotify e YouTube</h3>
+        <Integrations />
         <p className="muted small-text">Tudo é salvo neste navegador. Músicas e arquivos de áudio não saem do seu dispositivo.</p>
       </div>
     </div>

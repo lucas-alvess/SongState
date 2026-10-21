@@ -125,3 +125,11 @@ export const getFile = (id: string) => tx<Blob | undefined>('readonly', (s) => s
 export const delFile = (id: string) => tx('readwrite', (s) => s.delete(id));
 
 export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+
+// ---------- Integrações (chaves ficam só neste navegador) ----------
+
+export interface Integrations {
+  spotifyClientId: string;
+  youtubeKey: string;
+}
+export const useIntegrations = () => useLocalStorage<Integrations>('ss.integrations', { spotifyClientId: '', youtubeKey: '' });

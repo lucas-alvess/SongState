@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { JamPanel } from '../components/JamPanel';
+import { Search } from './Search';
 import { SongForm } from '../components/SongForm';
 import { Chips, PageHeader } from '../components/ui';
 import { BUILTIN_SONGS } from '../lib/library';
@@ -9,10 +10,10 @@ import { pcLabel } from '../lib/music';
 import { useSettings, useStoredList } from '../lib/storage';
 import type { Song } from '../lib/songs';
 
-export function Backing({ jam }: { jam?: boolean }) {
+export function Backing({ jam, search }: { jam?: boolean; search?: boolean }) {
   return (
     <>
-      <PageHeader eyebrow="Toque junto" title="Backing tracks" sub="Bases geradas aqui mesmo, a partir da cifra: bateria, baixo e acordes no tom e andamento que você escolher.">
+      <PageHeader eyebrow="Toque junto" title="Backing tracks" sub="Toque junto com bases geradas a partir da cifra, ou busque no YouTube e no Spotify e ouça aqui mesmo, sem sair do site.">
         <div className="subtabs">
           <NavLink to="/backing" end className={({ isActive }) => `subtab${isActive ? ' active' : ''}`}>
             <Icon name="music" size={16} /> Músicas
@@ -20,9 +21,12 @@ export function Backing({ jam }: { jam?: boolean }) {
           <NavLink to="/backing/jam" className={({ isActive }) => `subtab${isActive ? ' active' : ''}`}>
             <Icon name="sliders" size={16} /> Jam tracks
           </NavLink>
+          <NavLink to="/backing/buscar" className={({ isActive }) => `subtab${isActive ? ' active' : ''}`}>
+            <Icon name="headphones" size={16} /> Buscar e ouvir
+          </NavLink>
         </div>
       </PageHeader>
-      {jam ? <JamPanel /> : <Library />}
+      {search ? <Search /> : jam ? <JamPanel /> : <Library />}
     </>
   );
 }

@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { Icon } from './Icon';
+import { trackFromSource, usePlayer } from '../lib/player';
+import { isMobileBrowser, useSpotifyConnected } from '../lib/spotify';
 import { getFile } from '../lib/storage';
 import type { Source } from '../lib/songs';
 
@@ -90,12 +93,33 @@ function FilePlayer({ src }: { src: Source }) {
   );
 }
 
-export function SourcePlayer({ src }: { src: Source }) {
+function TrackRow({ src, title }: { src: Source; title: string }) {
+  const { play, track } = usePlayer();
+  const t = trackFromSource(src, title)!;
+  const on = track?.provider === t.provider && track.id === t.id;
+  return (
+    <div className="track-row">
+      {t.thumb ? <img src={t.thumb} alt="" /> : <div className="result-ph" />}
+      <div className="result-body">
+        <b>{src.label}</b>
+        <span className="muted small-text">Toca no reprodutor fixo do site, sem sair desta página.</span>
+      </div>
+      <button type="button" className="btn primary" onClick={() => play(t)}>
+        <Icon name="play" size={14} /> {on ? 'Tocando' : 'Ouvir'}
+      </button>
+    </div>
+  );
+}
+
+export function SourcePlayer({ src, title = '' }: { src: Source; title?: string }) {
+  const connected = useSpotifyConnected();
+  const dockable = (src.kind === 'youtube' && !!src.ytId) || (src.kind === 'spotify' && !!src.uri && connected && !isMobileBrowser());
+  if (dockable) return <TrackRow src={src} title={title} />;
   if (src.kind === 'spotify')
     return (
       <>
         <iframe className="spotify-frame" style={{ height: src.tall ? 352 : 152 }} src={src.embed} title={src.label} allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" />
-        <p className="muted small-text">Para ouvir a faixa completa, esteja logado no Spotify (Premium) neste navegador. Sem login o player toca só um trecho.</p>
+        <p className="muted small-text">Conecte o Spotify nos ajustes para tocar a faixa completa no reprodutor do site (navegador de computador). Sem isso, o player embutido toca a faixa completa só se você estiver logado no Spotify neste navegador.</p>
       </>
     );
   if (src.kind === 'youtube') return <YouTubePlayer src={src} />;

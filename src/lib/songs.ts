@@ -8,6 +8,9 @@ export interface Source {
   embed?: string; // url do iframe
   tall?: boolean; // playlists/álbuns pedem iframe maior
   fileId?: string; // IndexedDB
+  ytId?: string; // id do vídeo (reprodutor do site)
+  uri?: string; // spotify:track:... (reprodutor do site)
+  title?: string;
 }
 
 export interface Song {
@@ -41,6 +44,7 @@ export function parseLink(raw: string, id: string): Source | null {
       kind: 'spotify',
       label: `Spotify · ${type === 'track' ? 'faixa' : type === 'album' ? 'álbum' : type === 'playlist' ? 'playlist' : type}`,
       url: `https://open.spotify.com/${type}/${sid}`,
+      uri: `spotify:${type}:${sid}`,
       embed: `https://open.spotify.com/embed/${type}/${sid}?utm_source=generator&theme=0`,
       tall: type !== 'track' && type !== 'episode',
     };
@@ -61,7 +65,7 @@ export function parseLink(raw: string, id: string): Source | null {
   if (yt && (yt.v || yt.list)) {
     const base = 'https://www.youtube-nocookie.com/embed/';
     const embed = yt.v ? `${base}${yt.v}?enablejsapi=1&rel=0${yt.list ? `&list=${yt.list}` : ''}` : `${base}videoseries?list=${yt.list}&enablejsapi=1&rel=0`;
-    return { id, kind: 'youtube', label: yt.v ? 'YouTube · vídeo' : 'YouTube · playlist', url, embed };
+    return { id, kind: 'youtube', label: yt.v ? 'YouTube · vídeo' : 'YouTube · playlist', url, embed, ytId: yt.v };
   }
   return { id, kind: 'link', label: 'Link', url };
 }
