@@ -3,6 +3,15 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import './styles.css';
 import { handleSpotifyRedirect } from './lib/spotify';
+import { requestPersistence } from './lib/db';
+import { runMigrations } from './lib/migrations';
+
+try {
+  runMigrations(localStorage);
+} catch {
+  /* sem localStorage (modo privado restrito): o site segue sem salvar */
+}
+void requestPersistence();
 
 void handleSpotifyRedirect().finally(() => {
   createRoot(document.getElementById('root')!).render(

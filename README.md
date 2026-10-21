@@ -23,19 +23,22 @@ npm install
 npm run dev        # http://127.0.0.1:5173 (também acessível pela rede local)
 npm run build      # gera dist/ (site estático)
 npm run preview    # serve o build para conferir
+npm test           # testes automáticos (música, acordes, campos, conteúdo, banco de dados)
 ```
 
 Use `127.0.0.1` em vez de `localhost` se for conectar o Spotify (o Spotify não aceita `localhost`).
 
 ## Publicação (GitHub Pages)
 
-O deploy é automático: a cada push no `main`, o workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) instala as dependências, roda `npm run build` e publica a pasta `dist/`.
+O deploy é automático: a cada push no `main`, o workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) instala as dependências, roda os testes (`npm test`) e o build (`npm run build`) e publica a pasta `dist/`.
 
 Configuração feita uma única vez no GitHub:
 
 1. Abra **Settings → Pages** do repositório.
 2. Em **Build and deployment → Source**, escolha **GitHub Actions**.
 3. Faça um push no `main` (ou rode o workflow manualmente em **Actions → Deploy no GitHub Pages → Run workflow**).
+
+Se algum teste ou a verificação de tipos falhar, **nada é publicado** e o site continua na versão anterior.
 
 O site usa rotas com `#` (HashRouter) e `base: './'`, então funciona em qualquer subcaminho sem configuração extra.
 
@@ -81,10 +84,11 @@ As chaves ficam salvas **somente no navegador** de quem as digita (localStorage)
 src/
   lib/          música e áudio: music.ts (escalas, afinações, posições), harmony.ts (campos harmônicos),
                 curriculum.ts + curriculum-extra.ts (estudos), reference.ts (glossário), chords.ts (acordes,
-                detecção, cifras, digitações), jam.ts (motor de backing em Web Audio),
+                detecção, cifras, digitações), db.ts (IndexedDB versionado), migrations.ts (migração dos dados salvos), jam.ts (motor de backing em Web Audio),
                 curriculum.ts (estudos), exercises.ts, spotify.ts, youtube.ts, player.tsx
   components/   Fretboard (SVG), ScaleBoard, BackingPlayer, Dock (reprodutor fixo),
                 ChordDiagram, Metronome, Integrations ...
+  tests/        testes automáticos (Vitest)
   pages/        Explorer, Studies, StudyDetail, ExerciseList, quizzes, Chords, Backing, Search, SongPage
 ```
 

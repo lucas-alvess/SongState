@@ -119,31 +119,8 @@ export function useStats() {
 }
 
 // ---------- IndexedDB (arquivos de áudio) ----------
-
-const DB = 'songstation';
-const STORE = 'files';
-
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB, 1);
-    req.onupgradeneeded = () => req.result.createObjectStore(STORE);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function tx<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const req = fn(db.transaction(STORE, mode).objectStore(STORE));
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-export const putFile = (id: string, blob: Blob) => tx('readwrite', (s) => s.put(blob, id));
-export const getFile = (id: string) => tx<Blob | undefined>('readonly', (s) => s.get(id));
-export const delFile = (id: string) => tx('readwrite', (s) => s.delete(id));
+// A implementação está em db.ts; as funções são reexportadas aqui para manter os imports existentes.
+export { putFile, getFile, delFile } from './db';
 
 export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 
