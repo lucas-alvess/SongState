@@ -236,6 +236,17 @@ describe('Treino: revisão espaçada e resumo diário', () => {
     expect(b.keys['ss.days']).toEqual({ '2026-06-10': { n: 0, ok: 0, by: { note: [2, 0] } } });
   });
 
+  it('tempo ativo por dia e por seção entra no backup, com limites', () => {
+    const b = parseBackup(JSON.stringify({ app: 'songstate', format: 1, schema: 1, files: [], keys: { 'ss.days': { '2026-06-10': { n: 1, ok: 1, by: {}, ms: 999999999999, pg: { braco: 5000, 'sec ruim!': 1, estudos: -5 } }, '2026-06-11': { n: 0, ok: 0, by: {}, ms: 'x', pg: 7 } }, 'ss.goal': { unit: 'min', weekly: 120 } } }));
+    expect(b.keys['ss.days']).toEqual({ '2026-06-10': { n: 1, ok: 1, by: {}, ms: 86400000, pg: { braco: 5000, estudos: 0 } }, '2026-06-11': { n: 0, ok: 0, by: {} } });
+    expect(b.keys['ss.goal']).toEqual({ unit: 'min', weekly: 120 });
+  });
+
+  it('mesclar dias: fica o registro mais completo (mais tempo/respostas)', () => {
+    const d = mergeValue('ss.days', { a: { n: 1, ok: 1, by: {}, ms: 600000 }, b: { n: 5, ok: 5, by: {} } }, { a: { n: 9, ok: 9, by: {}, ms: 1000 }, b: { n: 2, ok: 2, by: {}, ms: 3600000 } }) as Record<string, { n: number }>;
+    expect([d.a.n, d.b.n]).toEqual([1, 2]); // a: o atual tem mais tempo; b: o do backup tem mais tempo
+  });
+
   it('mesclar: vale o registro mais recente de cada item e o dia com mais respostas', () => {
     const cur = { a: st({ t: 50, i: 7 }), b: st({ t: 5 }) };
     const inc = { a: st({ t: 10, i: 1 }), b: st({ t: 90, i: 9 }), c: st() };

@@ -23,6 +23,7 @@ export const EASE_START = 2.5;
 export const EASE_MIN = 1.3;
 export const EASE_MAX = 3;
 export const MAX_ITEMS = 4000;
+export const MIN_STUDY_MS = 2 * 60 * 1000; // 2 minutos de estudo ativo contam como dia estudado
 
 export const newState = (now: number): SrsState => ({ e: EASE_START, i: 0, d: now, r: 0, l: 0, n: 0, t: 0 });
 
@@ -75,6 +76,8 @@ export interface DayStat {
   n: number; // respostas
   ok: number; // acertos
   by: Record<string, [number, number]>; // por tipo: [respostas, acertos]
+  ms?: number; // tempo ativo de estudo no dia (ms)
+  pg?: Record<string, number>; // tempo ativo por seção do app (ms)
 }
 export type DaysMap = Record<string, DayStat>;
 
@@ -89,7 +92,15 @@ export function bumpDay(map: DaysMap, ts: number, kind: string, ok: boolean): Da
   const k = dayKey(ts);
   const cur = map[k] ?? { n: 0, ok: 0, by: {} };
   const [n, a] = cur.by[kind] ?? [0, 0];
-  return { ...map, [k]: { n: cur.n + 1, ok: cur.ok + (ok ? 1 : 0), by: { ...cur.by, [kind]: [n + 1, a + (ok ? 1 : 0)] } } };
+  return { ...map, [k]: { ...cur, n: cur.n + 1, ok: cur.ok + (ok ? 1 : 0), by: { ...cur.by, [kind]: [n + 1, a + (ok ? 1 : 0)] } } };
+}
+
+/** Soma tempo ativo (ms) em um dia e em uma seção do app, sem alterar o mapa original. */
+export function addActive(map: DaysMap, ts: number, section: string, ms: number): DaysMap {
+  if (!(ms > 0)) return map;
+  const k = dayKey(ts);
+  const cur = map[k] ?? { n: 0, ok: 0, by: {} };
+  return { ...map, [k]: { ...cur, ms: (cur.ms ?? 0) + ms, pg: { ...cur.pg, [section]: (cur.pg?.[section] ?? 0) + ms } } };
 }
 
 /** Dias seguidos estudando, terminando hoje (ou ontem, se hoje ainda não começou). */
@@ -99,10 +110,14 @@ export function streak(days: DaysMap, now: number): number {
     d.setDate(d.getDate() - 1); // por data do calendário (dias de 23 ou 25 horas no horário de verão não atrapalham)
     return d.getTime();
   };
+  const studied = (ts: number) => {
+    const d = days[dayKey(ts)];
+    return !!d && (d.n > 0 || (d.ms ?? 0) >= MIN_STUDY_MS);
+  };
   let count = 0;
   let t = now;
-  if (!days[dayKey(t)]?.n) t = prevDay(t); // hoje ainda sem estudo não quebra a sequência
-  while (days[dayKey(t)]?.n) {
+  if (!studied(t)) t = prevDay(t); // hoje ainda sem estudo não quebra a sequência
+  while (studied(t)) {
     count++;
     t = prevDay(t);
   }

@@ -23,7 +23,7 @@ const KEY_STATS = 'ss.stats';
 const KEY_SRS = 'ss.srs'; // revisão espaçada do Treino
 const KEY_DAYS = 'ss.days'; // resumo diário de estudo
 const STUDY_PROGRESS = /^ss\.study\.[\w-]{1,60}$/;
-const PREFS = /^ss\.(settings|board|chords|fields|jam|mix|dock|search|treino|studies\.tab|cfg\.[\w-]{1,40})$/;
+const PREFS = /^ss\.(settings|board|chords|fields|jam|mix|dock|search|treino|goal|studies\.tab|cfg\.[\w-]{1,40})$/;
 
 /** Dados do usuário (têm regra de mesclagem própria). */
 export const isDataKey = (k: string) => k === KEY_SONGS || k === KEY_STUDIES || k === KEY_STATS || k === KEY_SRS || k === KEY_DAYS || STUDY_PROGRESS.test(k);
@@ -135,7 +135,14 @@ function sanitizeDays(d: unknown): DaysMap | null {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !isObj(v)) continue;
     const by: DaysMap[string]['by'] = {};
     if (isObj(v.by)) for (const [k, pair] of Object.entries(v.by).slice(0, 20)) if (/^[\w-]{1,20}$/.test(k) && Array.isArray(pair)) by[k] = [Math.round(num(pair[0], 0, 1e6, 0)), Math.round(num(pair[1], 0, 1e6, 0))];
-    out[day] = { n: Math.round(num(v.n, 0, 1e6, 0)), ok: Math.round(num(v.ok, 0, 1e6, 0)), by };
+    const entry: DaysMap[string] = { n: Math.round(num(v.n, 0, 1e6, 0)), ok: Math.round(num(v.ok, 0, 1e6, 0)), by };
+    if (typeof v.ms === 'number') entry.ms = Math.round(num(v.ms, 0, 86400000, 0)); // no máximo 24 h por dia
+    if (isObj(v.pg)) {
+      const pg: Record<string, number> = {};
+      for (const [k, ms] of Object.entries(v.pg).slice(0, 20)) if (/^[\w-]{1,20}$/.test(k)) pg[k] = Math.round(num(ms, 0, 86400000, 0));
+      entry.pg = pg;
+    }
+    out[day] = entry;
   }
   return out;
 }
@@ -254,6 +261,7 @@ export function parseBackup(text: string): Backup {
 
 export type ImportMode = 'merge' | 'replace';
 
+const dayScore = (d: DaysMap[string]) => (d.ms ?? 0) + d.n * 1000;
 const byId = <T extends { id: string }>(cur: T[], inc: T[]) => [...cur, ...inc.filter((x) => !cur.some((c) => c.id === x.id))];
 
 /** Resultado da mesclagem de uma chave de dados. `undefined` em `current` = não existe ainda. */
@@ -273,7 +281,7 @@ export function mergeValue(key: string, current: unknown, incoming: unknown): un
   }
   if (key === KEY_DAYS) {
     const out: DaysMap = { ...(isObj(current) ? (current as DaysMap) : {}) };
-    for (const [day, v] of Object.entries(incoming as DaysMap)) if (!out[day] || v.n > out[day].n) out[day] = v;
+    for (const [day, v] of Object.entries(incoming as DaysMap)) if (!out[day] || dayScore(v) > dayScore(out[day])) out[day] = v; // o mesmo dia vindo de dois aparelhos: fica o mais completo
     return out;
   }
   if (STUDY_PROGRESS.test(key)) {

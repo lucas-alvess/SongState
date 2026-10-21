@@ -101,6 +101,9 @@ function Home({ cfg, setCfg, dueNow, days, srsCount, srs, ctx, onStart, canStart
       </Link>
       <PageHeader eyebrow="Revisão espaçada" title="Treino de hoje" sub="Uma sessão curta que mistura os assuntos e repete mais as perguntas que você erra. Acertou, a pergunta volta daqui a mais dias; errou, volta em minutos." />
 
+      <p className="muted small-text" style={{ margin: '0 0 10px' }}>
+        <Link to="/progresso">Ver meu progresso e metas →</Link>
+      </p>
       <section className="panel train-stats">
         <div>
           <b>{dueNow}</b>

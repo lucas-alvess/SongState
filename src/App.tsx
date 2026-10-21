@@ -13,12 +13,17 @@ import { Fields } from './pages/Fields';
 import { Reference } from './pages/Reference';
 import { Data } from './pages/Data';
 import { Train } from './pages/Train';
+import { Progress } from './pages/Progress';
 import { SafeRoutes } from './components/ErrorBoundary';
 import { Backing } from './pages/Backing';
 import { SongPage } from './pages/SongPage';
 import { Dock } from './components/Dock';
 import { PlayerProvider } from './lib/player';
 import { useInstall, useOnline } from './lib/pwa';
+import { useActivityTracker } from './lib/activity';
+import { dayKey, streak } from './lib/srs';
+import { DEFAULT_GOAL, goalProgress, normalizeGoal, studied } from './lib/stats';
+import { useDays } from './lib/storage';
 
 const NAV: { to: string; label: string; icon: IconName; end?: boolean; also?: string[] }[] = [
   { to: '/', label: 'Braço', icon: 'fretboard', end: true },
@@ -41,7 +46,24 @@ function NavItem({ item, base }: { item: (typeof NAV)[number]; base: 'nav-link' 
   );
 }
 
+/** Atalho para o Progresso: mostra a sequência de dias; tracejado = hoje ainda sem estudo (lembrete). */
+function StreakChip() {
+  const [days] = useDays();
+  const [goalRaw] = useLocalStorage('ss.goal', DEFAULT_GOAL);
+  const now = Date.now();
+  const run = streak(days, now);
+  const doneToday = !!days[dayKey(now)] && studied(days[dayKey(now)]);
+  const gp = goalProgress(days, now, normalizeGoal(goalRaw));
+  const text = run > 0 ? `Sequência de ${run} ${run === 1 ? 'dia' : 'dias'}${doneToday ? '' : ', hoje ainda sem estudo'}. Meta da semana: ${gp.pct}%.` : `Progresso. Meta da semana: ${gp.pct}%.`;
+  return (
+    <NavLink to="/progresso" className={`streak-chip${run > 0 && !doneToday ? ' pending' : ''}`} aria-label={text} title={text}>
+      {run > 0 ? <>🔥 {run}</> : <Icon name="chart" size={16} />}
+    </NavLink>
+  );
+}
+
 export default function App() {
+  useActivityTracker();
   const [settings, setSettings] = useLocalStorage<Settings>('ss.settings', DEFAULT_SETTINGS);
   const [open, setOpen] = useState(false);
   const update = useCallback((patch: Partial<Settings>) => setSettings((s) => ({ ...s, ...patch })), [setSettings]);
@@ -68,6 +90,7 @@ export default function App() {
               ))}
             </div>
             {!online && <span className="tag offline">Offline</span>}
+            <StreakChip />
             {canPrompt && (
               <button type="button" className="btn small primary install-btn" onClick={install}>
                 <Icon name="upload" size={15} /> Instalar app
@@ -86,6 +109,7 @@ export default function App() {
               <Route path="/exercicios" element={<ExerciseList />} />
               <Route path="/exercicios/:id" element={<ExerciseRunner />} />
               <Route path="/treino" element={<Train />} />
+              <Route path="/progresso" element={<Progress />} />
               <Route path="/acordes" element={<Chords />} />
               <Route path="/campos" element={<Fields />} />
               <Route path="/referencia" element={<Reference />} />

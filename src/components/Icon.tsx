@@ -57,6 +57,7 @@ const PATHS: Record<string, ReactNode> = {
   back: <path d="M19 12H5M11 6l-6 6 6 6" />,
   star: <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" />,
   upload: <path d="M12 16V4M7 9l5-5 5 5M4 20h16" />,
+  chart: <path d="M4 20V11M10 20V5M16 20v-8M21 20H3" />,
   download: <path d="M12 4v12M7 11l5 5 5-5M4 20h16" />,
   ear: <path d="M7 10a5 5 0 0 1 10 0c0 3-3 3.5-3 6a3 3 0 0 1-5.5 1.5M10 10a2 2 0 0 1 4 0" />,
 };
