@@ -220,7 +220,7 @@ export function getSpotifyPlayer(onError: (msg: string) => void): Promise<Spotif
     await loadSdk();
     return new Promise<SpotifyHandle>((resolve, reject) => {
       const player = new window.Spotify.Player({
-        name: 'SongStation',
+        name: 'SongState',
         volume: 0.8,
         getOAuthToken: (cb: (t: string) => void) => {
           getToken().then((t) => cb(t ?? ''));

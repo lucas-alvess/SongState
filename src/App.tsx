@@ -38,7 +38,7 @@ export default function App() {
             <NavLink to="/" className="brand">
               <span className="logo" />
               <span>
-                Song<b>Station</b>
+                Song<b>State</b>
               </span>
             </NavLink>
             <div className="nav-links">

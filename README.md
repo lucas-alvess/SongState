@@ -1,8 +1,8 @@
-# SongStation
+# SongState
 
 Site pessoal para estudar guitarra: braço interativo, estudos em capítulos, exercícios de memorização, dicionário de acordes e backing tracks que tocam dentro do próprio site.
 
-**Site no ar:** https://lucas-alvess.github.io/SongStation/
+**Site no ar:** https://lucas-alvess.github.io/SongState/
 
 ## O que tem
 
@@ -42,7 +42,7 @@ O site usa rotas com `#` (HashRouter) e `base: './'`, então funciona em qualque
 Tocar um link do YouTube não exige configuração. Para **buscar** e usar o player completo do Spotify, abra **Ajustes → Spotify e YouTube** no site:
 
 - **YouTube:** informe uma chave gratuita da YouTube Data API v3.
-- **Spotify:** informe o *Client ID* de um app criado em [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) e adicione ao app o *Redirect URI* exibido nessa tela. Para o site publicado, é `https://lucas-alvess.github.io/SongStation/`. O player completo exige conta Premium e navegador de computador.
+- **Spotify:** informe o *Client ID* de um app criado em [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) e adicione ao app o *Redirect URI* exibido nessa tela. Para o site publicado, é `https://lucas-alvess.github.io/SongState/`. O player completo exige conta Premium e navegador de computador.
 
 As chaves ficam salvas **somente no navegador** de quem as digita (localStorage). Nenhuma chave está no repositório.
 

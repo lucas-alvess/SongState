@@ -73,7 +73,7 @@ function Library() {
     const blob = new Blob([JSON.stringify(songs.map((s) => ({ ...s, sources: s.sources.filter((x) => x.kind !== 'file') })), null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'songstation-musicas.json';
+    a.download = 'songstate-musicas.json';
     a.click();
     URL.revokeObjectURL(a.href);
   };
