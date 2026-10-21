@@ -60,6 +60,7 @@ const PATHS: Record<string, ReactNode> = {
   chart: <path d="M4 20V11M10 20V5M16 20v-8M21 20H3" />,
   record: <circle cx="12" cy="12" r="6.5" fill="currentColor" />,
   download: <path d="M12 4v12M7 11l5 5 5-5M4 20h16" />,
+  cloud: <path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 10a4 4 0 0 1-.5 8H7z" />,
   ear: <path d="M7 10a5 5 0 0 1 10 0c0 3-3 3.5-3 6a3 3 0 0 1-5.5 1.5M10 10a2 2 0 0 1 4 0" />,
 };
 

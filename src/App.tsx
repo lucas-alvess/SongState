@@ -1,8 +1,10 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { HashRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { DEFAULT_SETTINGS, SettingsContext, useLocalStorage, type Settings } from './lib/storage';
 import { GlobalDefs, Icon, type IconName } from './components/Icon';
 import { SettingsPanel } from './components/SettingsPanel';
+import { SyncChip } from './components/SyncPanel';
+import { initSync } from './lib/sync';
 import { Explorer } from './pages/Explorer';
 import { Studies } from './pages/Studies';
 import { StudyDetail } from './pages/StudyDetail';
@@ -65,6 +67,7 @@ function StreakChip() {
 
 export default function App() {
   useActivityTracker();
+  useEffect(() => initSync(), []);
   const [settings, setSettings] = useLocalStorage<Settings>('ss.settings', DEFAULT_SETTINGS);
   const [open, setOpen] = useState(false);
   const update = useCallback((patch: Partial<Settings>) => setSettings((s) => ({ ...s, ...patch })), [setSettings]);
@@ -91,6 +94,7 @@ export default function App() {
               ))}
             </div>
             {!online && <span className="tag offline">Offline</span>}
+            <SyncChip />
             <StreakChip />
             {canPrompt && (
               <button type="button" className="btn small primary install-btn" onClick={install}>

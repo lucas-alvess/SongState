@@ -167,7 +167,7 @@ function sanitizePref(d: unknown): Record<string, unknown> | null {
   return JSON.stringify(d).length <= 20000 ? d : null;
 }
 
-function sanitizeKey(key: string, value: unknown, files: ReadonlySet<string>): unknown | null {
+export function sanitizeKey(key: string, value: unknown, files: ReadonlySet<string>): unknown | null {
   if (key === KEY_SONGS) {
     if (!Array.isArray(value)) return null;
     return value.slice(0, 500).map((s) => sanitizeSong(s, files)).filter((s): s is Song => !!s);

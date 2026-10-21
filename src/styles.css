@@ -689,3 +689,10 @@ i.heat.l4 { background: #c4b0ff; }
 @media (prefers-reduced-motion: reduce) { .ring-fg { transition: none; } }
 .take-level { width: 100%; margin: 8px 0; }
 .take-review { margin-top: 8px; }
+
+/* sincronização */
+.sync-panel { margin-bottom: 8px; }
+.sync-chip { cursor: pointer; font: inherit; font-size: 0.82rem; }
+.sync-chip-text { font-weight: 600; }
+.sync-advanced { margin-top: 12px; }
+.sync-advanced input { width: 100%; margin-top: 6px; }

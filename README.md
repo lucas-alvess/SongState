@@ -84,6 +84,24 @@ Tocar um link do YouTube não exige configuração. Para **buscar** e usar o pla
 
 As chaves ficam salvas **somente no navegador** de quem as digita (localStorage). Nenhuma chave está no repositório.
 
+## Login Google e sincronização (opcional)
+
+Entrando com o Google, seus dados passam a ficar também na **sua conta**, numa pasta oculta do Drive (`appDataFolder`) que só o SongState enxerga — o app pede só a permissão `drive.appdata` e o e-mail. Sem login, tudo segue como antes (somente neste navegador). **Offline primeiro:** os dados sempre ficam no aparelho; o envio acontece quando há internet e login válido.
+
+**O que sincroniza:** músicas, estudos próprios, progresso das lições, estatísticas, revisão espaçada, dias de estudo e, se você ligar a opção, os loops, gravações e arquivos de áudio. Preferências de tela e chaves (Spotify/YouTube) **nunca** saem do aparelho.
+
+**Como funciona:** cada aparelho mescla seus dados com os da nuvem (união; no mesmo item vale o mais recente; exclusões viajam como marcas de exclusão para os outros aparelhos). O login do Google dura cerca de 1 hora e não existe renovação sem servidor, então ao reabrir o app aparece **Reconectar** (um toque) e, enquanto isso, nada se perde.
+
+### Configuração (uma vez, no Google Cloud)
+
+1. Em [console.cloud.google.com](https://console.cloud.google.com), crie um projeto (ex.: *SongState*).
+2. **APIs e serviços → Biblioteca:** ative a **Google Drive API**.
+3. **Tela de consentimento OAuth:** tipo *Externo*; preencha nome e e-mail; em *Escopos* adicione `.../auth/drive.appdata`; deixe em *Testando* e inclua seu e-mail (e de quem for usar) em *Usuários de teste*. (Para liberar a qualquer pessoa, publique o app — o escopo `drive.appdata` não exige verificação.)
+4. **Credenciais → Criar credenciais → ID do cliente OAuth → Aplicativo da Web.** Em *Origens JavaScript autorizadas* coloque `https://lucas-alvess.github.io` (e `http://localhost:5173` para testes). Não precisa de URI de redirecionamento.
+5. Copie o **ID do cliente** (termina em `.apps.googleusercontent.com`; é público, não é segredo) e use **um** dos caminhos:
+   - no GitHub: *Settings → Secrets and variables → Actions → Variables → New repository variable* com o nome `GOOGLE_CLIENT_ID` e rode o deploy de novo; ou
+   - no site: *Configurações → Conta e sincronização → Configuração avançada*, cole o ID (vale só naquele navegador).
+
 ## Estrutura
 
 ```
@@ -101,7 +119,7 @@ src/
 
 ## Dados e privacidade
 
-Músicas, progresso, configurações e arquivos de áudio ficam no navegador de cada dispositivo (localStorage e IndexedDB).
+Músicas, progresso, configurações e arquivos de áudio ficam no navegador de cada dispositivo (localStorage e IndexedDB). Só saem dele se você exportar um backup ou ligar o login Google (acima).
 
 A página **Dados e backup** (Configurações → Backup e armazenamento, ou `#/dados`) gera um arquivo único com músicas, estudos próprios, lições concluídas, histórico dos exercícios e preferências, e restaura esse arquivo mesclando ou substituindo. Os arquivos de áudio entram se você marcar a opção. As chaves do Spotify e do YouTube **nunca** vão para o arquivo, e tudo o que é importado é validado. A página também mostra o espaço usado e pede ao navegador para não apagar os dados do site.
 

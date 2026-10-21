@@ -3,6 +3,7 @@ import { Icon } from './Icon';
 import { Chips, Field, Toggle } from './ui';
 import { InstallApp } from './InstallApp';
 import { Integrations } from './Integrations';
+import { SyncPanel } from './SyncPanel';
 import { TUNINGS } from '../lib/music';
 import { useSettings } from '../lib/storage';
 import { useSheet } from '../lib/useSheet';
@@ -62,6 +63,8 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
         <Toggle label="Modo canhoto" checked={settings.leftHanded} onChange={(leftHanded) => update({ leftHanded })} />
         <h3 className="section-title">Aplicativo</h3>
         <InstallApp />
+        <h3 className="section-title">Conta e sincronização</h3>
+        <SyncPanel />
         <h3 className="section-title">Spotify e YouTube</h3>
         <Integrations />
         <h3 className="section-title">Ferramentas</h3>
@@ -72,7 +75,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
         <Link to="/dados" className="btn" onClick={onClose}>
           <Icon name="download" size={16} /> Backup e armazenamento
         </Link>
-        <p className="muted small-text">Tudo é salvo neste navegador. Músicas e arquivos de áudio não saem do seu dispositivo.</p>
+        <p className="muted small-text">Tudo é salvo neste navegador. Só sai do aparelho se você entrar com o Google e ligar a sincronização, ou exportar um backup.</p>
       </div>
     </div>
   );

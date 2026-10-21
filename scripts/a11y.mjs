@@ -59,6 +59,7 @@ const PAGES = [
   ['/progresso', 'Progresso (com dados)', async (p) => { await p.evaluate(() => { const d = {}; const now = new Date(); for (let i = 0; i < 70; i++) { if (i % 3 === 2) continue; const t = new Date(now); t.setDate(t.getDate() - i); const k = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; d[k] = { n: (i * 7) % 25, ok: (i * 5) % 20, by: { note: [(i * 7) % 25, (i * 5) % 20] }, ms: ((i * 37) % 50) * 60000, pg: { braco: ((i * 37) % 50) * 60000 } }; } localStorage.setItem('ss.days', JSON.stringify(d)); }); await p.reload({ waitUntil: 'networkidle0' }); await sleep(300); }],
   ['/dados', 'Dados e backup'],
   ['/', 'Configurações (painel aberto)', async (p) => { await p.evaluate(() => document.querySelector('button[aria-label="Configurações"]')?.click()); await sleep(250); }],
+  ['/', 'Configurações (conta Google ligada)', async (p) => { await p.evaluate(() => { localStorage.setItem('ss.sync.cfg', JSON.stringify({ clientId: '1-a.apps.googleusercontent.com', audio: true, email: 'pessoa@example.com', name: 'Pessoa' })); }); await p.reload({ waitUntil: 'networkidle0' }); await sleep(300); await p.evaluate(() => document.querySelector('button[aria-label="Configurações"]')?.click()); await sleep(250); }],
 ];
 const VIEWPORTS = [
   ['desktop', { width: 1280, height: 900 }],

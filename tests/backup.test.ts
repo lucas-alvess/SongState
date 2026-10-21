@@ -320,7 +320,7 @@ describe('apagar tudo', () => {
 
 describe('cobertura das chaves do app', () => {
   /** Toda chave "ss.*" usada no código precisa estar decidida: entra no backup, é segredo ou é só local. */
-  const LOCAL_ONLY = new Set(['ss.schema', LAST_BACKUP_KEY]);
+  const LOCAL_ONLY = new Set(['ss.schema', LAST_BACKUP_KEY, 'ss.sync.cfg', 'ss.sync.state']); // login e estado da sincronização pertencem a cada aparelho
   const files = (dir: string): string[] => readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? files(join(dir, f)) : /\.(ts|tsx)$/.test(f) ? [join(dir, f)] : []));
 
   it('nenhuma chave nova fica de fora sem ninguém decidir', () => {

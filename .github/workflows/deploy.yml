@@ -28,6 +28,9 @@ jobs:
         run: npm test
       - name: Verificação de tipos e build
         run: npm run build
+        env:
+          # Client ID do login Google (público). Defina em Settings > Secrets and variables > Actions > Variables
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
       - name: Acessibilidade (axe-core)
         run: npm run a11y
       - uses: actions/configure-pages@v5
