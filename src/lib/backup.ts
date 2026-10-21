@@ -11,6 +11,7 @@ import { MIGRATIONS } from './migrations';
 import { SCALES } from './music';
 import { sanitizeSong, type Song } from './songs';
 import type { Lesson } from './curriculum';
+import { MAX_ITEMS, prune, type DaysMap, type SrsMap } from './srs';
 
 export const BACKUP_FORMAT = 1;
 export const SCHEMA_VERSION = Math.max(...MIGRATIONS.map((m) => m.version));
@@ -19,11 +20,13 @@ export const LAST_BACKUP_KEY = 'ss.lastBackup'; // só local: data do último ba
 const KEY_SONGS = 'ss.songs';
 const KEY_STUDIES = 'ss.studies';
 const KEY_STATS = 'ss.stats';
+const KEY_SRS = 'ss.srs'; // revisão espaçada do Treino
+const KEY_DAYS = 'ss.days'; // resumo diário de estudo
 const STUDY_PROGRESS = /^ss\.study\.[\w-]{1,60}$/;
-const PREFS = /^ss\.(settings|board|chords|fields|jam|mix|dock|search|studies\.tab|cfg\.[\w-]{1,40})$/;
+const PREFS = /^ss\.(settings|board|chords|fields|jam|mix|dock|search|treino|studies\.tab|cfg\.[\w-]{1,40})$/;
 
 /** Dados do usuário (têm regra de mesclagem própria). */
-export const isDataKey = (k: string) => k === KEY_SONGS || k === KEY_STUDIES || k === KEY_STATS || STUDY_PROGRESS.test(k);
+export const isDataKey = (k: string) => k === KEY_SONGS || k === KEY_STUDIES || k === KEY_STATS || k === KEY_SRS || k === KEY_DAYS || STUDY_PROGRESS.test(k);
 /** Preferências de tela (valem para backup, mas nunca sobrescrevem o que já existe ao mesclar). */
 export const isPrefKey = (k: string) => PREFS.test(k);
 export const isBackupKey = (k: string) => isDataKey(k) || isPrefKey(k);
@@ -114,6 +117,29 @@ function sanitizeStats(d: unknown): Record<string, unknown> | null {
   return out;
 }
 
+const SRS_ID = /^[a-z]+\|[\w|-]{1,70}$/;
+function sanitizeSrs(d: unknown): SrsMap | null {
+  if (!isObj(d)) return null;
+  const out: SrsMap = {};
+  for (const [id, v] of Object.entries(d).slice(0, MAX_ITEMS)) {
+    if (!SRS_ID.test(id) || !isObj(v)) continue;
+    out[id] = { e: num(v.e, 1.3, 3, 2.5), i: Math.round(num(v.i, 0, 3650, 0)), d: num(v.d, 0, 1e15, 0), r: Math.round(num(v.r, 0, 1000, 0)), l: Math.round(num(v.l, 0, 1e6, 0)), n: Math.round(num(v.n, 0, 1e6, 0)), t: num(v.t, 0, 1e15, 0) };
+  }
+  return out;
+}
+
+function sanitizeDays(d: unknown): DaysMap | null {
+  if (!isObj(d)) return null;
+  const out: DaysMap = {};
+  for (const [day, v] of Object.entries(d).slice(-800)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !isObj(v)) continue;
+    const by: DaysMap[string]['by'] = {};
+    if (isObj(v.by)) for (const [k, pair] of Object.entries(v.by).slice(0, 20)) if (/^[\w-]{1,20}$/.test(k) && Array.isArray(pair)) by[k] = [Math.round(num(pair[0], 0, 1e6, 0)), Math.round(num(pair[1], 0, 1e6, 0))];
+    out[day] = { n: Math.round(num(v.n, 0, 1e6, 0)), ok: Math.round(num(v.ok, 0, 1e6, 0)), by };
+  }
+  return out;
+}
+
 function sanitizeProgress(d: unknown): { done: boolean[]; sessions: { at: number; bpm: number }[] } | null {
   if (!isObj(d)) return null;
   const done = Array.isArray(d.done) ? d.done.slice(0, 100).map((x) => x === true) : [];
@@ -139,6 +165,8 @@ function sanitizeKey(key: string, value: unknown, files: ReadonlySet<string>): u
   }
   if (key === KEY_STUDIES) return Array.isArray(value) ? value.slice(0, 200).map(sanitizeLesson).filter((l): l is Lesson => !!l) : null;
   if (key === KEY_STATS) return sanitizeStats(value);
+  if (key === KEY_SRS) return sanitizeSrs(value);
+  if (key === KEY_DAYS) return sanitizeDays(value);
   if (STUDY_PROGRESS.test(key)) return sanitizeProgress(value);
   return sanitizePref(value);
 }
@@ -238,6 +266,16 @@ export function mergeValue(key: string, current: unknown, incoming: unknown): un
     for (const [id, v] of Object.entries(incoming as Record<string, { last: number }>)) if (!out[id] || v.last > out[id].last) out[id] = v;
     return out;
   }
+  if (key === KEY_SRS) {
+    const out: SrsMap = { ...(isObj(current) ? (current as SrsMap) : {}) };
+    for (const [id, v] of Object.entries(incoming as SrsMap)) if (!out[id] || v.t > out[id].t) out[id] = v;
+    return prune(out);
+  }
+  if (key === KEY_DAYS) {
+    const out: DaysMap = { ...(isObj(current) ? (current as DaysMap) : {}) };
+    for (const [day, v] of Object.entries(incoming as DaysMap)) if (!out[day] || v.n > out[day].n) out[day] = v;
+    return out;
+  }
   if (STUDY_PROGRESS.test(key)) {
     const c = sanitizeProgress(current) ?? { done: [], sessions: [] };
     const i = incoming as { done: boolean[]; sessions: { at: number; bpm: number }[] };
@@ -255,6 +293,8 @@ export interface Summary {
   studies: number;
   lessonsDone: number;
   exercises: number;
+  reviewItems: number;
+  studyDays: number;
   files: number;
 }
 
@@ -265,6 +305,8 @@ export function summarize(keys: Record<string, unknown>, files: number): Summary
     studies: Array.isArray(keys[KEY_STUDIES]) ? (keys[KEY_STUDIES] as unknown[]).length : 0,
     lessonsDone,
     exercises: isObj(keys[KEY_STATS]) ? Object.keys(keys[KEY_STATS] as object).length : 0,
+    reviewItems: isObj(keys[KEY_SRS]) ? Object.keys(keys[KEY_SRS] as object).length : 0,
+    studyDays: isObj(keys[KEY_DAYS]) ? Object.keys(keys[KEY_DAYS] as object).length : 0,
     files,
   };
 }

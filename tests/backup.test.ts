@@ -202,6 +202,50 @@ describe('importar arquivo malicioso ou inválido', () => {
   });
 });
 
+describe('Treino: revisão espaçada e resumo diário', () => {
+  const st = (o: object = {}) => ({ e: 2.5, i: 1, d: 100, r: 1, l: 0, n: 1, t: 10, ...o });
+
+  it('entram no backup e voltam iguais', async () => {
+    const s = new MemStore();
+    s.setItem('ss.srs', JSON.stringify({ 'note|standard|0|3': st() }));
+    s.setItem('ss.days', JSON.stringify({ '2026-06-10': { n: 4, ok: 3, by: { note: [4, 3] } } }));
+    s.setItem('ss.treino', JSON.stringify({ size: 12, cats: ['notas'] }));
+    const { blob, counts } = await createBackup(s, { files: false });
+    expect(counts).toMatchObject({ reviewItems: 1, studyDays: 1 });
+    const b = parseBackup(await text(blob));
+    expect(b.keys['ss.srs']).toEqual({ 'note|standard|0|3': st() });
+    expect(Object.keys(b.keys)).toContain('ss.treino');
+  });
+
+  it('valores fora da faixa e ids estranhos são corrigidos ou descartados', () => {
+    const b = parseBackup(
+      JSON.stringify({
+        app: 'songstate',
+        format: 1,
+        schema: 1,
+        files: [],
+        keys: {
+          'ss.srs': { 'note|standard|0|3': st({ e: 99, i: -4, d: 'x', l: 1e12 }), '<script>': st(), 'sem-barra': st(), 'chord|0|maj': 5 },
+          'ss.days': { '2026-06-10': { n: -3, ok: 'a', by: { 'tipo ruim!': [1, 1], note: [2, 'x'] } }, 'ontem': { n: 1 } },
+        },
+      }),
+    );
+    const srs = b.keys['ss.srs'] as Record<string, { e: number; i: number; d: number }>;
+    expect(Object.keys(srs)).toEqual(['note|standard|0|3']);
+    expect(srs['note|standard|0|3']).toMatchObject({ e: 3, i: 0, d: 0 });
+    expect(b.keys['ss.days']).toEqual({ '2026-06-10': { n: 0, ok: 0, by: { note: [2, 0] } } });
+  });
+
+  it('mesclar: vale o registro mais recente de cada item e o dia com mais respostas', () => {
+    const cur = { a: st({ t: 50, i: 7 }), b: st({ t: 5 }) };
+    const inc = { a: st({ t: 10, i: 1 }), b: st({ t: 90, i: 9 }), c: st() };
+    const m = mergeValue('ss.srs', cur, inc) as Record<string, { i: number }>;
+    expect([m.a.i, m.b.i, Object.keys(m).length]).toEqual([7, 9, 3]);
+    const d = mergeValue('ss.days', { x: { n: 5, ok: 1, by: {} }, y: { n: 1, ok: 1, by: {} } }, { x: { n: 2, ok: 2, by: {} }, y: { n: 9, ok: 9, by: {} } }) as Record<string, { n: number }>;
+    expect([d.x.n, d.y.n]).toEqual([5, 9]);
+  });
+});
+
 describe('apagar tudo', () => {
   it('remove as chaves ss.* (inclusive segredos) e os arquivos, e preserva o resto', async () => {
     await putFile('f1', new Blob(['x']));

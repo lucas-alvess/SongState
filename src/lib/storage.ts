@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { AccPref, Lang } from './music';
+import { bumpDay, type DaysMap, type SrsMap } from './srs';
 
 /**
  * Estado salvo em localStorage e **compartilhado** entre todos os componentes que usam a mesma
@@ -111,15 +112,24 @@ export interface ExerciseStat {
 }
 export type StatsMap = Record<string, ExerciseStat>;
 
+/** Resumo por dia (sequência de dias e estatísticas): alimentado pelos exercícios e pelo Treino. */
+export const useDays = () => useLocalStorage<DaysMap>('ss.days', {});
+/** Estado da revisão espaçada do Treino, por item. */
+export const useSrs = () => useLocalStorage<SrsMap>('ss.srs', {});
+
 export function useStats() {
   const [stats, setStats] = useLocalStorage<StatsMap>('ss.stats', {});
+  const [, setDays] = useDays();
   const record = useCallback(
-    (id: string, ok: boolean, streak: number) =>
+    (id: string, ok: boolean, streak: number) => {
+      const now = Date.now();
       setStats((s) => {
         const cur = s[id] ?? { attempts: 0, correct: 0, best: 0, last: 0 };
-        return { ...s, [id]: { attempts: cur.attempts + 1, correct: cur.correct + (ok ? 1 : 0), best: Math.max(cur.best, streak), last: Date.now() } };
-      }),
-    [setStats],
+        return { ...s, [id]: { attempts: cur.attempts + 1, correct: cur.correct + (ok ? 1 : 0), best: Math.max(cur.best, streak), last: now } };
+      });
+      setDays((d) => bumpDay(d, now, id, ok));
+    },
+    [setStats, setDays],
   );
   return { stats, record };
 }

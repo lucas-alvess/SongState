@@ -3,13 +3,18 @@ import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { Chips, PageHeader } from '../components/ui';
 import { EXERCISES } from '../lib/exercises';
-import { useStats } from '../lib/storage';
+import { dueIds, streak } from '../lib/srs';
+import { useDays, useSrs, useStats } from '../lib/storage';
 
 const CATEGORIES = ['Todos', ...new Set(EXERCISES.map((e) => e.category))];
 const LEVELS = ['Todos', 'Iniciante', 'Intermediário', 'Avançado'];
 
 export function ExerciseList() {
   const { stats } = useStats();
+  const [srs] = useSrs();
+  const [days] = useDays();
+  const due = dueIds(srs, Date.now()).length;
+  const run = streak(days, Date.now());
   const [cat, setCat] = useState('Todos');
   const [lvl, setLvl] = useState('Todos');
 
@@ -19,6 +24,20 @@ export function ExerciseList() {
   return (
     <>
       <PageHeader eyebrow={`${practiced}/${EXERCISES.length} praticados`} title="Exercícios" sub="Treinos interativos de memorização com pontuação. Cada um registra sua taxa de acerto e melhor sequência." />
+      <Link to="/treino" className="card train-hero">
+        <div className="card-icon">
+          <Icon name="target" size={28} />
+        </div>
+        <div className="card-body">
+          <h3 aria-level={2}>Treino de hoje</h3>
+          <p className="muted">Uma sessão curta que mistura notas, escalas, acordes e campos harmônicos e repete mais o que você erra.</p>
+          <div className="card-foot">
+            <span className="tag">{due > 0 ? `${due} para revisar` : 'Pronto para começar'}</span>
+            {run > 0 && <span className="muted small-text">🔥 {run} {run === 1 ? 'dia seguido' : 'dias seguidos'}</span>}
+          </div>
+        </div>
+        <Icon name="back" size={18} />
+      </Link>
       <div className="filter-rows">
         <Chips small value={cat} onChange={setCat} options={CATEGORIES.map((c) => ({ value: c, label: c }))} />
         <Chips small value={lvl} onChange={setLvl} options={LEVELS.map((c) => ({ value: c, label: c }))} />

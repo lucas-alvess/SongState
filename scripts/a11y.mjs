@@ -45,6 +45,8 @@ const PAGES = [
   ['/campos', 'Campos (círculo)', async (p) => clickText(p, 'Círculo')],
   ['/campos', 'Campos (roda)', async (p) => clickText(p, 'Roda')],
   ['/referencia', 'Referência'],
+  ['/treino', 'Treino (início)'],
+  ['/treino', 'Treino (pergunta)', async (p) => { await clickText(p, 'Começar'); }],
   ['/backing', 'Backing'],
   ['/dados', 'Dados e backup'],
   ['/', 'Configurações (painel aberto)', async (p) => { await p.evaluate(() => document.querySelector('button[aria-label="Configurações"]')?.click()); await sleep(250); }],

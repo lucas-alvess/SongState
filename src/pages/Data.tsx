@@ -8,7 +8,7 @@ import { notifyStorage } from '../lib/storage';
 
 const fmtBytes = (n: number) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${Math.round(n / 1024)} KB` : `${n} B`);
 const describe = (s: Summary) =>
-  [s.songs && `${s.songs} música(s)`, s.studies && `${s.studies} estudo(s) próprio(s)`, s.lessonsDone && `${s.lessonsDone} lição(ões) concluída(s)`, s.exercises && `${s.exercises} exercício(s) com histórico`, s.files && `${s.files} arquivo(s) de áudio`].filter(Boolean).join(', ') || 'nenhum dado';
+  [s.songs && `${s.songs} música(s)`, s.studies && `${s.studies} estudo(s) próprio(s)`, s.lessonsDone && `${s.lessonsDone} lição(ões) concluída(s)`, s.exercises && `${s.exercises} exercício(s) com histórico`, s.reviewItems && `${s.reviewItems} item(ns) do Treino`, s.studyDays && `${s.studyDays} dia(s) de estudo`, s.files && `${s.files} arquivo(s) de áudio`].filter(Boolean).join(', ') || 'nenhum dado';
 
 interface Info {
   usage?: number;

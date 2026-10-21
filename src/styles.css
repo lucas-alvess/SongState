@@ -564,3 +564,20 @@ body.has-dock:has(.dock.min) .content { padding-bottom: 170px; }
 .fretboard:focus-visible .fb-cursor { display: block; }
 .wheel-seg:focus-visible, .slice:focus-visible { outline: none; }
 .wheel-seg:focus-visible path:first-child, .slice:focus-visible path { stroke: #fff; stroke-width: 3.5; }
+
+/* ---- treino diário ---- */
+.train-hero { display: flex; align-items: center; gap: 16px; padding: 18px; margin-bottom: 16px; text-decoration: none; color: inherit; background: linear-gradient(135deg, rgba(139, 92, 246, 0.22), rgba(236, 72, 153, 0.16)); border: 1px solid var(--border-2); }
+.train-hero > .icon:last-child { transform: rotate(180deg); color: var(--muted); flex: none; }
+.train-hero .card-body { flex: 1; min-width: 0; }
+.train-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; }
+.train-stats b { display: block; font-family: 'Space Grotesk', sans-serif; font-size: 1.7rem; line-height: 1.1; }
+.train-stats span { font-size: 0.78rem; color: var(--muted); }
+.train-head { display: flex; align-items: center; gap: 10px; justify-content: space-between; margin-bottom: 8px; }
+.train-feedback { min-height: 72px; margin-top: 4px; }
+.train-feedback p { margin: 0 0 10px; }
+.weak-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 10px; }
+.kind-row { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; margin-bottom: 8px; }
+.kind-row .bar { grid-column: 1 / -1; margin: 4px 0 0; }
+@media (max-width: 520px) { .train-stats { grid-template-columns: repeat(2, 1fr); row-gap: 14px; } }
+.answer-grid.twelve { grid-template-columns: repeat(6, 1fr); }
+@media (max-width: 520px) { .answer-grid.twelve { grid-template-columns: repeat(4, 1fr); } }

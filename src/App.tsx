@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { HashRouter, NavLink, Route, Routes } from 'react-router-dom';
+import { HashRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { DEFAULT_SETTINGS, SettingsContext, useLocalStorage, type Settings } from './lib/storage';
 import { GlobalDefs, Icon, type IconName } from './components/Icon';
 import { SettingsPanel } from './components/SettingsPanel';
@@ -12,6 +12,7 @@ import { Chords } from './pages/Chords';
 import { Fields } from './pages/Fields';
 import { Reference } from './pages/Reference';
 import { Data } from './pages/Data';
+import { Train } from './pages/Train';
 import { SafeRoutes } from './components/ErrorBoundary';
 import { Backing } from './pages/Backing';
 import { SongPage } from './pages/SongPage';
@@ -19,14 +20,26 @@ import { Dock } from './components/Dock';
 import { PlayerProvider } from './lib/player';
 import { useInstall, useOnline } from './lib/pwa';
 
-const NAV: { to: string; label: string; icon: IconName; end?: boolean }[] = [
+const NAV: { to: string; label: string; icon: IconName; end?: boolean; also?: string[] }[] = [
   { to: '/', label: 'Braço', icon: 'fretboard', end: true },
   { to: '/estudos', label: 'Estudos', icon: 'book' },
-  { to: '/exercicios', label: 'Exercícios', icon: 'target' },
+  { to: '/exercicios', label: 'Exercícios', icon: 'target', also: ['/treino'] },
   { to: '/acordes', label: 'Acordes', icon: 'chord' },
   { to: '/campos', label: 'Campos', icon: 'wheel' },
   { to: '/backing', label: 'Backing', icon: 'headphones' },
 ];
+
+/** Item do menu; `also` marca como ativo outras rotas da mesma seção (ex.: /treino dentro de Exercícios). */
+function NavItem({ item, base }: { item: (typeof NAV)[number]; base: 'nav-link' | 'tab' }) {
+  const { pathname } = useLocation();
+  const extra = (item.also ?? []).some((p) => pathname === p || pathname.startsWith(p + '/'));
+  return (
+    <NavLink to={item.to} end={item.end} className={({ isActive }) => `${base}${isActive || extra ? ' active' : ''}`}>
+      <Icon name={item.icon} size={base === 'tab' ? 22 : 18} />
+      {base === 'tab' ? <span>{item.label}</span> : item.label}
+    </NavLink>
+  );
+}
 
 export default function App() {
   const [settings, setSettings] = useLocalStorage<Settings>('ss.settings', DEFAULT_SETTINGS);
@@ -51,10 +64,7 @@ export default function App() {
             </NavLink>
             <div className="nav-links">
               {NAV.map((n) => (
-                <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-                  <Icon name={n.icon} size={18} />
-                  {n.label}
-                </NavLink>
+                <NavItem key={n.to} item={n} base="nav-link" />
               ))}
             </div>
             {!online && <span className="tag offline">Offline</span>}
@@ -75,6 +85,7 @@ export default function App() {
               <Route path="/estudos/:id" element={<StudyDetail />} />
               <Route path="/exercicios" element={<ExerciseList />} />
               <Route path="/exercicios/:id" element={<ExerciseRunner />} />
+              <Route path="/treino" element={<Train />} />
               <Route path="/acordes" element={<Chords />} />
               <Route path="/campos" element={<Fields />} />
               <Route path="/referencia" element={<Reference />} />
@@ -88,10 +99,7 @@ export default function App() {
           </main>
           <nav className="tabbar" aria-label="Navegação inferior">
             {NAV.map((n) => (
-              <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => `tab${isActive ? ' active' : ''}`}>
-                <Icon name={n.icon} size={22} />
-                <span>{n.label}</span>
-              </NavLink>
+              <NavItem key={n.to} item={n} base="tab" />
             ))}
           </nav>
           <Dock />
