@@ -3,6 +3,7 @@ import { Icon } from '../components/Icon';
 import { exerciseById } from '../lib/exercises';
 import { FindAll, IntervalFind, IntervalId, NoteFind, NoteName, ScaleId, ScaleSpell, ShapeBuild } from './quizzes';
 import { ChordBuild, ChordSpell, EarChord, EarInterval } from './quizzes2';
+import { FieldBuildQuiz, FieldChordQuiz, FieldDegreeQuiz } from './quizzes3';
 
 const RUNNERS: Record<string, () => React.JSX.Element> = {
   'note-name': NoteName,
@@ -15,6 +16,9 @@ const RUNNERS: Record<string, () => React.JSX.Element> = {
   'scale-id': ScaleId,
   'chord-spell': ChordSpell,
   'chord-build': ChordBuild,
+  'field-chord': FieldChordQuiz,
+  'field-degree': FieldDegreeQuiz,
+  'field-build': FieldBuildQuiz,
   'ear-interval': EarInterval,
   'ear-chord': EarChord,
 };

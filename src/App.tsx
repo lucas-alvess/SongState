@@ -9,6 +9,8 @@ import { StudyDetail } from './pages/StudyDetail';
 import { ExerciseList } from './pages/ExerciseList';
 import { ExerciseRunner } from './pages/ExerciseRunner';
 import { Chords } from './pages/Chords';
+import { Fields } from './pages/Fields';
+import { Reference } from './pages/Reference';
 import { Backing } from './pages/Backing';
 import { SongPage } from './pages/SongPage';
 import { Dock } from './components/Dock';
@@ -20,6 +22,7 @@ const NAV: { to: string; label: string; icon: IconName; end?: boolean }[] = [
   { to: '/estudos', label: 'Estudos', icon: 'book' },
   { to: '/exercicios', label: 'Exercícios', icon: 'target' },
   { to: '/acordes', label: 'Acordes', icon: 'chord' },
+  { to: '/campos', label: 'Campos', icon: 'wheel' },
   { to: '/backing', label: 'Backing', icon: 'headphones' },
 ];
 
@@ -70,6 +73,8 @@ export default function App() {
               <Route path="/exercicios" element={<ExerciseList />} />
               <Route path="/exercicios/:id" element={<ExerciseRunner />} />
               <Route path="/acordes" element={<Chords />} />
+              <Route path="/campos" element={<Fields />} />
+              <Route path="/referencia" element={<Reference />} />
               <Route path="/backing" element={<Backing />} />
               <Route path="/backing/jam" element={<Backing jam />} />
               <Route path="/backing/buscar" element={<Backing search />} />

@@ -4,9 +4,9 @@ export interface ExerciseMeta {
   id: string;
   title: string;
   desc: string;
-  icon: 'target' | 'fretboard' | 'chord' | 'ear' | 'book';
+  icon: 'target' | 'fretboard' | 'chord' | 'ear' | 'book' | 'wheel';
   level: ExLevel;
-  category: 'Notas' | 'Escalas e shapes' | 'Intervalos' | 'Acordes' | 'Ouvido';
+  category: 'Notas' | 'Escalas e shapes' | 'Intervalos' | 'Acordes' | 'Campo harmônico' | 'Ouvido';
 }
 
 export const EXERCISES: ExerciseMeta[] = [
@@ -20,6 +20,9 @@ export const EXERCISES: ExerciseMeta[] = [
   { id: 'interval-find', title: 'Encontre o intervalo', desc: 'A partir de uma nota, toque a 3ª, 5ª, 7ª… em qualquer corda.', icon: 'fretboard', level: 'Intermediário', category: 'Intervalos' },
   { id: 'chord-spell', title: 'Notas do acorde', desc: 'Dado um acorde (ex.: Dm7), informe as notas que o formam.', icon: 'chord', level: 'Intermediário', category: 'Acordes' },
   { id: 'chord-build', title: 'Monte o acorde', desc: 'Dado o nome do acorde, marque as notas no braço.', icon: 'chord', level: 'Avançado', category: 'Acordes' },
+  { id: 'field-chord', title: 'Acorde do grau', desc: 'Dado o campo harmônico e o grau (ex.: IV de Sol maior), escolha o acorde.', icon: 'wheel', level: 'Intermediário', category: 'Campo harmônico' },
+  { id: 'field-degree', title: 'Que grau é este acorde?', desc: 'Dado um acorde e o tom, descubra o grau no campo harmônico.', icon: 'wheel', level: 'Intermediário', category: 'Campo harmônico' },
+  { id: 'field-build', title: 'Monte o campo harmônico', desc: 'Escolha, na ordem, os 7 acordes do campo de um tom sorteado.', icon: 'wheel', level: 'Avançado', category: 'Campo harmônico' },
   { id: 'ear-interval', title: 'Ouça o intervalo', desc: 'Ouça duas notas e identifique o intervalo entre elas.', icon: 'ear', level: 'Intermediário', category: 'Ouvido' },
   { id: 'ear-chord', title: 'Ouça o acorde', desc: 'Ouça um acorde e diga se é maior, menor, diminuto, aumentado ou de sétima.', icon: 'ear', level: 'Avançado', category: 'Ouvido' },
 ];

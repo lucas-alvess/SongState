@@ -82,6 +82,19 @@ function Detail({ lesson, crumb, prev, next, onDelete }: { lesson: Lesson; crumb
         </section>
       )}
 
+      {lesson.example?.map((e, i) => (
+        <section key={i} className="panel example">
+          {e.title && <h4>{e.title}</h4>}
+          <pre>{e.text}</pre>
+        </section>
+      ))}
+      {lesson.tip && (
+        <div className="tip-box">
+          <b>Dica</b>
+          <span>{lesson.tip}</span>
+        </div>
+      )}
+
       <ScaleBoard state={board} setState={setBoard} advanced={false} />
 
       <div className="two-col">
@@ -137,7 +150,7 @@ function Detail({ lesson, crumb, prev, next, onDelete }: { lesson: Lesson; crumb
         </section>
         <div>
           <Metronome initialBpm={lesson.bpm} />
-          {(lesson.exercises?.length || lesson.chord || lesson.jam) && (
+          {(lesson.exercises?.length || lesson.chord || lesson.jam || lesson.field || lesson.links?.length) && (
             <section className="panel">
               <h3>Pratique isto</h3>
               <div className="link-list">
@@ -156,6 +169,17 @@ function Detail({ lesson, crumb, prev, next, onDelete }: { lesson: Lesson; crumb
                     <Icon name="arrow" size={16} />
                   </Link>
                 )}
+                {lesson.field && (
+                  <Link to={`/campos?root=${lesson.field.root}&field=${lesson.field.fieldId}&view=${lesson.field.view ?? 'tabela'}`} className="link-row">
+                    <Icon name="wheel" size={18} /> Campos harmônicos: ver no site
+                    <Icon name="arrow" size={16} />
+                  </Link>
+                )}
+                {lesson.links?.map((l) => (
+                  <Link key={l.to + l.label} to={l.to} className="link-row">
+                    <Icon name="arrow" size={18} /> {l.label}
+                  </Link>
+                ))}
                 {lesson.jam && (
                   <Link to="/backing/jam" className="link-row">
                     <Icon name="headphones" size={18} /> Jam tracks: tocar junto

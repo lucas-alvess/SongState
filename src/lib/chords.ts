@@ -28,6 +28,7 @@ export const CHORD_TYPES: ChordType[] = [
   { id: 'mMaj7', symbol: 'm(maj7)', name: 'menor com sétima maior', tokens: ['1', 'b3', '5', '7'], aliases: ['m(maj7)', 'mMaj7', 'mM7', 'm7+', 'minmaj7'], group: 'Sétimas' },
   { id: '7sus4', symbol: '7sus4', name: 'com sétima e quarta suspensa', tokens: ['1', '4', '5', 'b7'], aliases: ['7sus4', '7sus'], group: 'Sétimas' },
   { id: '7b5', symbol: '7(♭5)', name: 'com sétima e quinta bemol', tokens: ['1', '3', 'b5', 'b7'], aliases: ['7b5', '7(b5)', '7(♭5)'], group: 'Sétimas' },
+  { id: 'augmaj7', symbol: 'maj7(♯5)', name: 'aumentado com sétima maior', tokens: ['1', '3', '#5', '7'], aliases: ['maj7#5', 'maj7(#5)', 'maj7(♯5)', '+maj7', 'M7#5'], group: 'Sétimas' },
   { id: '7#5', symbol: '7(♯5)', name: 'com sétima e quinta aumentada', tokens: ['1', '3', '#5', 'b7'], aliases: ['7#5', '7(#5)', '7(♯5)', '7+', 'aug7'], group: 'Sétimas' },
 
   { id: '6', symbol: '6', name: 'maior com sexta', tokens: ['1', '3', '5', '6'], aliases: ['6', 'maj6'], group: 'Sextas e extensões' },

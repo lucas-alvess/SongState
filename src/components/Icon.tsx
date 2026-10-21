@@ -23,6 +23,13 @@ const PATHS: Record<string, ReactNode> = {
       <circle cx="14.5" cy="18" r="1.6" fill="currentColor" />
     </>
   ),
+  wheel: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="3.2" />
+      <path d="M12 3v5.8M12 15.2V21M3 12h5.8M15.2 12H21M5.6 5.6l4.1 4.1M14.3 14.3l4.1 4.1M18.4 5.6l-4.1 4.1M9.7 14.3l-4.1 4.1" />
+    </>
+  ),
   headphones: (
     <>
       <path d="M3 14v-2a9 9 0 0 1 18 0v2" />

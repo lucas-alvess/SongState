@@ -9,9 +9,11 @@ Site pessoal para estudar guitarra: braço interativo, estudos em capítulos, ex
 | Página | Descrição |
 | --- | --- |
 | **Braço** | Braço de guitarra interativo com 20 escalas e modos, 7 posições (3 notas por corda) ou 5 caixas (pentatônicas), filtros por grau, corda e casas, modo teste que esconde os nomes, 9 afinações, modo canhoto e nomes C D E ou Dó Ré Mi. |
-| **Estudos** | 35 lições em 9 capítulos (Iniciante, Intermediário, Avançado) com teoria, passos com checklist, braço pré-configurado, metrônomo e histórico. Também aceita estudos próprios. |
-| **Exercícios** | 12 treinos com pontuação: notas, escalas e shapes, intervalos, acordes e ouvido. |
+| **Estudos** | 63 lições em 13 capítulos (Iniciante, Intermediário, Avançado): primeiros passos, teoria essencial, campos harmônicos, harmonia avançada e mais. Cada lição traz teoria, exemplos (tablaturas e formas de acordes), dicas, passos com checklist, braço pré-configurado, metrônomo e atalhos para exercícios. Também aceita estudos próprios. |
+| **Exercícios** | 15 treinos com pontuação: notas, escalas e shapes, intervalos, acordes, campos harmônicos e ouvido. |
+| **Campos** | Campos harmônicos (maior, menores natural/harmônica/melódica, maior harmônica e os modos) em **tabela**, **círculo das quintas**, **roda do campo**, **todos os 12 tons** e **comparação** entre campos. Tríades e tétrades, funções (T, SD, D), progressões comuns, áudio e **modo estudo** que esconde as respostas. |
 | **Acordes** | Clique nas casas e o site descobre o acorde (cifra e nome por extenso). Dicionário com 29 tipos e digitações geradas por algoritmo. |
+| **Referência** | Glossário de termos e tabelas de escalas, intervalos, acordes e armaduras de clave (geradas pelos mesmos dados do app). |
 | **Backing** | Cifra → base tocada no site (bateria, baixo e acordes) com transposição e contagem; jam tracks; busca e reprodução de YouTube e Spotify sem sair do site. |
 
 ## Rodar localmente
@@ -77,7 +79,8 @@ As chaves ficam salvas **somente no navegador** de quem as digita (localStorage)
 
 ```
 src/
-  lib/          música e áudio: music.ts (escalas, afinações, posições), chords.ts (acordes,
+  lib/          música e áudio: music.ts (escalas, afinações, posições), harmony.ts (campos harmônicos),
+                curriculum.ts + curriculum-extra.ts (estudos), reference.ts (glossário), chords.ts (acordes,
                 detecção, cifras, digitações), jam.ts (motor de backing em Web Audio),
                 curriculum.ts (estudos), exercises.ts, spotify.ts, youtube.ts, player.tsx
   components/   Fretboard (SVG), ScaleBoard, BackingPlayer, Dock (reprodutor fixo),

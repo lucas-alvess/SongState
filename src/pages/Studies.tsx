@@ -36,7 +36,16 @@ export function Studies() {
 
   return (
     <>
-      <PageHeader eyebrow={`${totalDone}/${ALL_LESSONS.length} lições concluídas`} title="Estudos" sub="Um caminho em capítulos, do primeiro contato com o braço até improvisação sobre harmonias. Cada lição traz teoria, passos práticos, o braço já configurado e metrônomo." />
+      <PageHeader eyebrow={`${totalDone}/${ALL_LESSONS.length} lições concluídas`} title="Estudos" sub="Um caminho em capítulos, do primeiro contato com o braço até improvisação sobre harmonias. Cada lição traz teoria, passos práticos, o braço já configurado e metrônomo.">
+        <div className="row gap wrap">
+          <Link to="/referencia" className="btn small">
+            <Icon name="book" size={15} /> Referência e glossário
+          </Link>
+          <Link to="/campos" className="btn small">
+            <Icon name="wheel" size={15} /> Campos harmônicos
+          </Link>
+        </div>
+      </PageHeader>
 
       <div className="level-tabs">
         {LEVELS.map((l) => (

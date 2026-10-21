@@ -11,6 +11,10 @@ export interface Lesson {
   exercises?: string[]; // ids de exercícios relacionados
   chord?: { root: number; type: string }; // atalho para o dicionário
   jam?: string; // id de progressão para praticar em Backing tracks
+  field?: { root: number; fieldId: string; view?: 'tabela' | 'circulo' | 'roda' | 'tons' | 'comparar' }; // atalho para Campos harmônicos
+  links?: { to: string; label: string }[]; // outros atalhos dentro do site
+  example?: { title?: string; text: string }[]; // blocos em fonte monoespaçada (tablaturas, formas de acordes, tabelas)
+  tip?: string; // destaque "Dica"
   custom?: boolean;
 }
 
@@ -28,11 +32,11 @@ export interface Level {
   chapters: Chapter[];
 }
 
-export const LEVELS: Level[] = [
+const BASE_LEVELS: Level[] = [
   {
     id: 'iniciante',
     title: 'Iniciante',
-    desc: 'Aprenda a se localizar no braço, as primeiras escalas e a base de técnica e ritmo.',
+    desc: 'Do instrumento aos primeiros acordes: afinação, tablaturas e cifras, o mapa do braço, as primeiras escalas e a base de técnica e ritmo.',
     chapters: [
       {
         id: 'c1',
@@ -106,7 +110,7 @@ export const LEVELS: Level[] = [
               'Toque Dó na 5ª corda (casa 3) e ache o Dó uma oitava acima na 3ª corda (casa 5)',
               'Repita com Sol na 6ª corda (casa 3) → 4ª corda (casa 5)',
               'Toque a forma de oitava subindo cromaticamente de casa em casa',
-              'Faça "Encontre o intervalo" pedindo a oitava (uníssono) de notas aleatórias',
+              'Faça "Todas as ocorrências" e confira que cada nota aparece em pares de oitava',
             ],
             board: { root: 0, scaleId: 'major', pos: null, label: 'note', degrees: ['1'], fretMax: 15 },
             exercises: ['find-all'],
@@ -263,7 +267,7 @@ export const LEVELS: Level[] = [
   {
     id: 'intermediario',
     title: 'Intermediário',
-    desc: 'Escalas completas, o idioma do blues e rock e as primeiras ligações com acordes.',
+    desc: 'Teoria essencial, escalas completas, blues e rock, acordes com pestana e CAGED e os campos harmônicos.',
     chapters: [
       {
         id: 'c4',
@@ -436,7 +440,7 @@ export const LEVELS: Level[] = [
             theory: ['Adicione a sétima à tríade: maior com 7ª maior (Cmaj7: 1 3 5 7), menor com 7ª menor (Cm7: 1 ♭3 5 ♭7) e dominante (C7: 1 3 5 ♭7). O dominante tem tensão e "pede" resolução.'],
             steps: [
               'Abra o dicionário e compare Cmaj7, Cm7 e C7',
-              'Em uma tonalidade (Dó maior), ache quais acordes de sétima nascem em cada grau',
+              'Abra o campo harmônico de Dó maior (em tétrades) e veja qual acorde de sétima nasce em cada grau',
               'Toque a progressão ii–V–I (Dm7 – G7 – Cmaj7) no braço',
               'Use a Jam track "ii – V – I" em Dó e ouça cada acorde',
             ],
@@ -482,7 +486,7 @@ export const LEVELS: Level[] = [
   {
     id: 'avancado',
     title: 'Avançado',
-    desc: 'Modos, escalas além do básico e improvisação sobre harmonias.',
+    desc: 'Modos, escalas além do básico, improvisação sobre harmonias e harmonia avançada (empréstimo modal, dominantes secundários, modulação).',
     chapters: [
       {
         id: 'c7',
@@ -568,7 +572,7 @@ export const LEVELS: Level[] = [
               'Identifique a 2ª aumentada entre Fá e Sol♯',
               'Toque as 7 posições devagar',
               'Resolva a 7ª (Sol♯) para a tônica (Lá) em cada posição',
-              'Use sobre o acorde E7 na Jam track "Cadência andaluza"',
+              'Use sobre o acorde E (o V maior) na Jam track "Cadência andaluza"',
             ],
             board: { root: 9, scaleId: 'harmonic-minor', pos: 0, label: 'degree', fretMax: 17 },
             jam: 'andalusian',
@@ -662,7 +666,7 @@ export const LEVELS: Level[] = [
             title: 'Escala alterada sobre o V7',
             desc: 'Máxima tensão antes de resolver.',
             bpm: 80,
-            theory: ['A escala alterada (7º modo da menor melódica) = 1 ♭2 ♭3 ♭4 ♭5 ♭6 ♭7. Ela contém todas as tensões do dominante (♭9, ♯9, ♯11, ♭13). Sobre G7 em direção a Cmaj7, use Láb melódica menor: a alterada de Sol.'],
+            theory: ['A escala alterada (7º modo da menor melódica) = 1 ♭2 ♭3 ♭4 ♭5 ♭6 ♭7. Ela contém todas as tensões do dominante (♭9, ♯9, ♯11, ♭13); a ♭4 é a 3ª maior escrita de outra forma. Sobre G7 em direção a Cmaj7, use Láb melódica menor: a alterada de Sol.'],
             steps: [
               'Toque a escala alterada de Sol e identifique ♭9, ♯9, ♭5 e ♭13',
               'Toque a alterada sobre um acorde G7 estático e resolva em Cmaj7',
@@ -677,6 +681,25 @@ export const LEVELS: Level[] = [
     ],
   },
 ];
+
+import { CHAPTER_TITLES, EXTRA_LESSONS, LESSON_PATCHES, NEW_CHAPTERS } from './curriculum-extra';
+
+/** Junta o currículo base com os capítulos novos, as lições extras e os atalhos adicionados às lições existentes. */
+function composeLevels(base: Level[]): Level[] {
+  const levels: Level[] = base.map((l) => ({
+    ...l,
+    chapters: l.chapters.map((c) => ({ ...c, title: CHAPTER_TITLES[c.id] ?? c.title, lessons: [...c.lessons, ...(EXTRA_LESSONS[c.id] ?? [])] })),
+  }));
+  for (const n of NEW_CHAPTERS) {
+    const lv = levels.find((l) => l.id === n.level)!;
+    const at = n.before ? lv.chapters.findIndex((c) => c.id === n.before) : -1;
+    lv.chapters.splice(at < 0 ? lv.chapters.length : at, 0, n.chapter);
+  }
+  for (const l of levels) for (const c of l.chapters) c.lessons = c.lessons.map((x) => ({ ...x, ...(LESSON_PATCHES[x.id] ?? {}) }));
+  return levels;
+}
+
+export const LEVELS: Level[] = composeLevels(BASE_LEVELS);
 
 export const ALL_LESSONS: { level: Level; chapter: Chapter; lesson: Lesson }[] = LEVELS.flatMap((level) => level.chapters.flatMap((chapter) => chapter.lessons.map((lesson) => ({ level, chapter, lesson }))));
 
