@@ -3,7 +3,7 @@ import { Icon } from './Icon';
 import { trackFromSource, usePlayer } from '../lib/player';
 import { isMobileBrowser, useSpotifyConnected } from '../lib/spotify';
 import { getFile } from '../lib/storage';
-import type { Source } from '../lib/songs';
+import { safeEmbedUrl, safeHref, type Source } from '../lib/songs';
 
 const SPEEDS = [0.5, 0.6, 0.75, 0.9, 1];
 
@@ -12,12 +12,12 @@ function YouTubePlayer({ src }: { src: Source }) {
   const [rate, setRate] = useState(1);
   const set = (r: number) => {
     setRate(r);
-    ref.current?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'setPlaybackRate', args: [r] }), '*');
+    ref.current?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'setPlaybackRate', args: [r] }), 'https://www.youtube-nocookie.com');
   };
   return (
     <>
       <div className="video-frame">
-        <iframe ref={ref} src={src.embed} title={src.label} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
+        <iframe ref={ref} src={safeEmbedUrl(src.embed)} title={src.label} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
       </div>
       <div className="row gap wrap speed-row">
         <span className="muted">Velocidade</span>
@@ -118,14 +118,14 @@ export function SourcePlayer({ src, title = '' }: { src: Source; title?: string 
   if (src.kind === 'spotify')
     return (
       <>
-        <iframe className="spotify-frame" style={{ height: src.tall ? 352 : 152 }} src={src.embed} title={src.label} allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" />
+        <iframe className="spotify-frame" style={{ height: src.tall ? 352 : 152 }} src={safeEmbedUrl(src.embed)} title={src.label} allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" />
         <p className="muted small-text">Conecte o Spotify nos ajustes para tocar a faixa completa no reprodutor do site (navegador de computador). Sem isso, o player embutido toca a faixa completa só se você estiver logado no Spotify neste navegador.</p>
       </>
     );
   if (src.kind === 'youtube') return <YouTubePlayer src={src} />;
   if (src.kind === 'file') return <FilePlayer src={src} />;
   return (
-    <a className="btn primary" href={src.url} target="_blank" rel="noreferrer">
+    <a className="btn primary" href={safeHref(src.url)} target="_blank" rel="noreferrer">
       Abrir link ↗
     </a>
   );

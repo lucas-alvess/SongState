@@ -8,7 +8,7 @@ import { Chips, PageHeader } from '../components/ui';
 import { BUILTIN_SONGS } from '../lib/library';
 import { pcLabel } from '../lib/music';
 import { useSettings, useStoredList } from '../lib/storage';
-import type { Song } from '../lib/songs';
+import { sanitizeSong, type Song } from '../lib/songs';
 
 export function Backing({ jam, search }: { jam?: boolean; search?: boolean }) {
   return (
@@ -80,9 +80,10 @@ function Library() {
   const importJson = async (file?: File) => {
     if (!file) return;
     try {
-      const data = JSON.parse(await file.text()) as Song[];
-      if (!Array.isArray(data)) throw new Error();
-      setSongs((cur) => [...cur, ...data.filter((d) => d.id && d.title && !cur.some((c) => c.id === d.id))]);
+      const data: unknown = JSON.parse(await file.text());
+      if (!Array.isArray(data) || data.length > 500) throw new Error();
+      const clean = data.map(sanitizeSong).filter((s): s is Song => !!s);
+      setSongs((cur) => [...cur, ...clean.filter((d) => !cur.some((c) => c.id === d.id))]);
     } catch {
       alert('Arquivo inválido.');
     }
