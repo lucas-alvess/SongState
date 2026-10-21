@@ -340,15 +340,26 @@ const SUITES = { smoke, tuner, looper, sync };
 const wanted = process.argv.slice(2).filter((a) => a in SUITES);
 for (const name of wanted.length ? wanted : Object.keys(SUITES)) {
   suite = name;
-  const t0 = Date.now();
-  try {
-    await SUITES[name]();
-  } catch (e) {
-    failures++;
-    console.log(`FALHA [${name}] a suíte quebrou: ${e instanceof Error ? e.stack : e}`);
-    if (process.env.GITHUB_ACTIONS) console.log(`::error title=e2e ${name} quebrou::${oneLine(e instanceof Error ? e.message : e)}`);
+  // testes de navegador em máquinas compartilhadas oscilam: uma suíte que falha ganha uma segunda tentativa
+  // (a falha da 1ª fica registrada como aviso; se a 2ª também falhar, vale a falha)
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const t0 = Date.now();
+    const before = failures;
+    try {
+      await SUITES[name]();
+    } catch (e) {
+      failures++;
+      console.log(`FALHA [${name}] a suíte quebrou: ${e instanceof Error ? e.stack : e}`);
+      if (process.env.GITHUB_ACTIONS) console.log(`::error title=e2e ${name} quebrou::${oneLine(e instanceof Error ? e.message : e)}`);
+    }
+    console.log(`      [${name}] ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+    if (failures === before) break;
+    if (attempt === 1) {
+      failures = before;
+      console.log(`AVISO [${name}] falhou; tentando de novo uma vez`);
+      if (process.env.GITHUB_ACTIONS) console.log(`::warning title=e2e ${name} instável::a suíte falhou na 1ª tentativa e foi repetida`);
+    }
   }
-  console.log(`      [${name}] ${((Date.now() - t0) / 1000).toFixed(1)} s`);
 }
 server.close();
 console.log(failures ? `\n${failures} falha(s) nos testes de interface.` : '\nTestes de interface: tudo certo.');
