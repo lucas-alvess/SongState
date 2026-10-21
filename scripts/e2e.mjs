@@ -211,7 +211,7 @@ async function looper() {
   await click(p, 'Gravar', '.pedal-main');
   ok('contagem, gravação e volta sozinho para "Tocando"', (await waitState('Contagem…', 2000)) && (await waitState('Gravando', 5000)) && (await waitState('Tocando', 8000)));
   await setInput(p, 'input[aria-label="Nome do loop"]', 'Teste A');
-  await click(p, 'Salvar loop');
+  await waitFor(() => click(p, 'Salvar loop'), 10000);
   await waitFor(async () => ((await ls(p, 'ss.loops')) ?? []).length === 1, 5000);
   const lib = await ls(p, 'ss.loops');
   ok('loop salvo: 4,000 s, 2 compassos, 120 BPM', lib?.length === 1 && lib[0].bars === 2 && Math.round(lib[0].bpm) === 120 && Math.abs(lib[0].samples / lib[0].sampleRate - 4) < 0.0005, JSON.stringify(lib?.[0] && { bars: lib[0].bars, samples: lib[0].samples }));
@@ -221,13 +221,14 @@ async function looper() {
   const gaps = on.slice(1).map((t, i) => t - on[i]);
   ok('8 cliques espaçados de 0,5 s (±3 ms): gravou no tempo', on.length === 8 && gaps.every((g) => Math.abs(g - 0.5) < 0.003), `n=${on.length} ${gaps.map((g) => g.toFixed(4)).join(',')}`);
 
-  await click(p, 'Gravar camada', '.pedal-main');
+  await waitFor(() => click(p, 'Gravar camada', '.pedal-main'), 10000);
   ok('camada por cima: aguarda o ciclo, grava e volta a tocar', (await waitState('Gravando camada', 8000)) && (await waitState('Tocando', 8000)));
-  await click(p, 'Salvar alterações');
-  await waitFor(async () => ((await ls(p, 'ss.loops')) ?? [{ layers: [] }])[0].layers.length === 2, 5000);
+  ok('a tela mostra 2 camadas', await waitFor(() => p.evaluate(() => /2 camada/.test(document.querySelector('.pedal-center')?.innerText ?? '')), 10000));
+  ok('"Salvar alterações" disponível', await waitFor(() => click(p, 'Salvar alterações'), 10000));
+  await waitFor(async () => ((await ls(p, 'ss.loops')) ?? [{ layers: [] }])[0].layers.length === 2, 10000);
   const lib2 = await ls(p, 'ss.loops');
   ok('salvar alterações atualiza o mesmo loop com 2 camadas', lib2.length === 1 && lib2[0].layers.length === 2 && lib2[0].name === 'Teste A');
-  const l2 = await readFile(lib2[0].layers[1].id);
+  const l2 = lib2[0].layers[1] ? await readFile(lib2[0].layers[1].id) : null;
   ok('a 2ª camada tem o mesmo tamanho da 1ª', !!l2 && l2.samples.length === lib2[0].samples);
   await click(p, 'Duplicar');
   ok('duplicar cria um 2º loop', await waitFor(async () => ((await ls(p, 'ss.loops')) ?? []).length === 2, 5000));
