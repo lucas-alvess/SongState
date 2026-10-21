@@ -39,7 +39,7 @@ export default function App() {
         <div className="app">
           <nav className="topbar">
             <NavLink to="/" className="brand">
-              <span className="logo" />
+              <img className="logo" src={`${import.meta.env.BASE_URL}icons/logo-96.png`} alt="" width={30} height={30} />
               <span>
                 Song<b>State</b>
               </span>

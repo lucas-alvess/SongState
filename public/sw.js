@@ -8,7 +8,7 @@
 const VERSION = '__BUILD__';
 const STATIC = `songstate-static-${VERSION}`;
 const RUNTIME = `songstate-runtime-${VERSION}`;
-const PRECACHE = ['./', './index.html', './manifest.webmanifest', './favicon.svg', './icons/icon-192.png', './icons/icon-512.png'];
+const PRECACHE = ['./', './index.html', './manifest.webmanifest', './favicon.svg', './icons/logo-96.png', './icons/favicon-32.png'];  // ícones grandes (192/512) só são baixados na instalação do app
 
 /** Guarda o shell do app e os arquivos com hash que o index.html referencia (JS e CSS), para abrir offline. */
 async function precache() {

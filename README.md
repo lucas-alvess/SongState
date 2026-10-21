@@ -45,7 +45,24 @@ O SongState é um PWA: pode ser instalado e abre em janela própria, inclusive s
 - **Android (Chrome):** menu ⋮ → *Instalar app* (ou o botão **Instalar app** no topo).
 - **iPhone / iPad (Safari):** *Compartilhar* → *Adicionar à Tela de Início*.
 
-Como funciona: [`public/sw.js`](public/sw.js) guarda o app em cache na primeira visita (navegação com rede primeiro, arquivos com hash em cache primeiro). A cada build, o `vite.config.ts` carimba o service worker com um id novo, então cada deploy invalida o cache antigo sozinho. Requisições para outros domínios (YouTube, Spotify, Google) não passam pelo service worker. Os ícones foram gerados a partir de [`public/icons/icon.svg`](public/icons/icon.svg).
+Como funciona: [`public/sw.js`](public/sw.js) guarda o app em cache na primeira visita (navegação com rede primeiro, arquivos com hash em cache primeiro). A cada build, o `vite.config.ts` carimba o service worker com um id novo, então cada deploy invalida o cache antigo sozinho. Requisições para outros domínios (YouTube, Spotify, Google) não passam pelo service worker. ### Ícone oficial
+
+O ícone do site é [`public/icons/guitar-neon-icon.png`](public/icons/guitar-neon-icon.png) (1254×1254). Todas as variações são geradas a partir dele por [`scripts/make-icons.mjs`](scripts/make-icons.mjs):
+
+| Arquivo | Uso |
+| --- | --- |
+| `icon-512.png`, `icon-192.png` | Ícone do app (cantos transparentes, o braço da guitarra sobressai no topo como no original) |
+| `maskable-512.png` | Android adaptável: arte reduzida para caber na zona segura (círculo de 40%) sobre fundo azul-escuro |
+| `apple-touch-icon.png` | iOS: 180×180 opaco (o sistema aplica o arredondamento) |
+| `favicon-32.png`, `favicon.svg`, `logo-96.png` | Aba do navegador e logo do cabeçalho: recorte só da guitarra, pois o texto não é legível em 16–32 px |
+| `icon.svg` | A arte completa embutida em um SVG (é uma imagem raster dentro de um SVG, não uma vetorização) |
+
+Para trocar o ícone, substitua o PNG de origem e rode:
+
+```bash
+npm install --no-save sharp   # só para gerar; não é dependência do projeto
+node scripts/make-icons.mjs
+```
 
 ## Spotify e YouTube (opcional)
 
