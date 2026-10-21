@@ -670,5 +670,6 @@ export const LESSON_PATCHES: Record<string, Partial<Lesson>> = {
   'menor-harmonica': { field: { root: 9, fieldId: 'harmonic-minor', view: 'tabela' } },
   'menor-melodica': { field: { root: 9, fieldId: 'melodic-minor', view: 'tabela' } },
   'menor-natural': { field: { root: 9, fieldId: 'natural-minor', view: 'tabela' } },
+  afinacao: { links: [{ to: '/afinador', label: 'Afinador: afine pelo microfone do aparelho' }] },
   'formulas-graus': { links: [{ to: '/referencia', label: 'Referência: fórmulas de todas as escalas' }] },
 };

@@ -179,7 +179,7 @@ describe('medidor de tempo ativo', () => {
 
 describe('seção a partir da URL', () => {
   it('mapeia rotas para seções', () => {
-    const cases: [string, string][] = [['', 'braco'], ['#/', 'braco'], ['#/estudos/campo-maior', 'estudos'], ['#/referencia', 'estudos'], ['#/exercicios/note-name', 'exercicios'], ['#/treino', 'exercicios'], ['#/acordes', 'acordes'], ['#/campos?x=1', 'campos'], ['#/backing/jam', 'backing'], ['#/dados', 'outros'], ['#/progresso', 'outros'], ['#/qualquer', 'outros']];
+    const cases: [string, string][] = [['', 'braco'], ['#/', 'braco'], ['#/estudos/campo-maior', 'estudos'], ['#/referencia', 'estudos'], ['#/exercicios/note-name', 'exercicios'], ['#/treino', 'exercicios'], ['#/acordes', 'acordes'], ['#/campos?x=1', 'campos'], ['#/backing/jam', 'backing'], ['#/afinador', 'afinador'], ['#/dados', 'outros'], ['#/progresso', 'outros'], ['#/qualquer', 'outros']];
     for (const [hash, want] of cases) expect(sectionOf(hash), hash).toBe(want);
   });
 });

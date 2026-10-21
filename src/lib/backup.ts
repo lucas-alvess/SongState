@@ -23,7 +23,7 @@ const KEY_STATS = 'ss.stats';
 const KEY_SRS = 'ss.srs'; // revisão espaçada do Treino
 const KEY_DAYS = 'ss.days'; // resumo diário de estudo
 const STUDY_PROGRESS = /^ss\.study\.[\w-]{1,60}$/;
-const PREFS = /^ss\.(settings|board|chords|fields|jam|mix|dock|search|treino|goal|studies\.tab|cfg\.[\w-]{1,40})$/;
+const PREFS = /^ss\.(settings|board|chords|fields|jam|mix|dock|search|treino|goal|tuner|studies\.tab|cfg\.[\w-]{1,40})$/;
 
 /** Dados do usuário (têm regra de mesclagem própria). */
 export const isDataKey = (k: string) => k === KEY_SONGS || k === KEY_STUDIES || k === KEY_STATS || k === KEY_SRS || k === KEY_DAYS || STUDY_PROGRESS.test(k);

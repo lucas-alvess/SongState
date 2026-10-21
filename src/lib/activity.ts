@@ -14,8 +14,8 @@ export const FLUSH_MS = 15000;
 export const IDLE_MS = 90 * 1000;
 export const IDLE_BACKING_MS = 10 * 60 * 1000;
 
-export type Section = 'braco' | 'estudos' | 'exercicios' | 'acordes' | 'campos' | 'backing' | 'outros';
-export const SECTION_LABEL: Record<Section, string> = { braco: 'Braço', estudos: 'Estudos', exercicios: 'Exercícios e treino', acordes: 'Acordes', campos: 'Campos harmônicos', backing: 'Backing', outros: 'Outros' };
+export type Section = 'braco' | 'estudos' | 'exercicios' | 'acordes' | 'campos' | 'backing' | 'afinador' | 'outros';
+export const SECTION_LABEL: Record<Section, string> = { braco: 'Braço', estudos: 'Estudos', exercicios: 'Exercícios e treino', acordes: 'Acordes', campos: 'Campos harmônicos', backing: 'Backing', afinador: 'Afinador', outros: 'Outros' };
 
 /** Seção do app a partir do hash da URL (ex.: "#/treino" → exercicios). */
 export function sectionOf(hash: string): Section {
@@ -30,6 +30,7 @@ export function sectionOf(hash: string): Section {
     case 'treino':
       return 'exercicios';
     case 'acordes':
+    case 'afinador':
     case 'campos':
     case 'backing':
       return first;

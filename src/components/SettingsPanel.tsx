@@ -64,6 +64,10 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
         <InstallApp />
         <h3 className="section-title">Spotify e YouTube</h3>
         <Integrations />
+        <h3 className="section-title">Ferramentas</h3>
+        <Link to="/afinador" className="btn" onClick={onClose}>
+          <Icon name="ear" size={16} /> Afinador
+        </Link>
         <h3 className="section-title">Seus dados</h3>
         <Link to="/dados" className="btn" onClick={onClose}>
           <Icon name="download" size={16} /> Backup e armazenamento

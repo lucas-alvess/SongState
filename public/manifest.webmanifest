@@ -22,6 +22,7 @@
     { "name": "Braço", "url": "./#/", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Estudos", "url": "./#/estudos", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Acordes", "url": "./#/acordes", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Afinador", "url": "./#/afinador", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Backing tracks", "url": "./#/backing", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

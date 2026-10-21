@@ -48,6 +48,7 @@ const PAGES = [
   ['/campos', 'Campos (círculo)', async (p) => clickText(p, 'Círculo')],
   ['/campos', 'Campos (roda)', async (p) => clickText(p, 'Roda')],
   ['/referencia', 'Referência'],
+  ['/afinador', 'Afinador'],
   ['/treino', 'Treino (início)'],
   ['/treino', 'Treino (pergunta)', async (p) => { await clickText(p, 'Começar'); }],
   ['/backing', 'Backing'],

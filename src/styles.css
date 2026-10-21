@@ -628,3 +628,35 @@ i.heat.l4 { background: #c4b0ff; }
 .lesson-player .board-wrap { margin: 10px 0 0; }
 .chord-name-inline { font-family: 'Space Grotesk', sans-serif; }
 .my-prog { margin: 12px 0; min-height: 52px; }
+
+/* ---- afinador ---- */
+.tuner { text-align: center; }
+.tuner-start { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 18px 0; }
+.tuner-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; }
+.tuner-top select { max-width: 260px; }
+.level { width: 140px; height: 8px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.level span { display: block; height: 100%; background: var(--grad-cool); transition: width 0.08s linear; }
+.tuner-read { max-width: 420px; margin: 0 auto; }
+.gauge { width: 100%; height: auto; display: block; overflow: visible; }
+.gauge-arc { fill: none; stroke: rgba(156, 156, 196, 0.35); stroke-width: 6; stroke-linecap: round; }
+.gauge-zone { fill: none; stroke: rgba(52, 211, 153, 0.55); stroke-width: 10; }
+.gauge-tick { stroke: rgba(156, 156, 196, 0.7); stroke-width: 2; }
+.gauge-tick.zero { stroke: var(--text); stroke-width: 3; }
+.gauge-sign { fill: var(--muted); font-size: 18px; font-family: 'Space Grotesk', sans-serif; }
+.gauge-needle { transition: transform 0.12s ease-out; }
+.gauge-needle line { stroke: #f3f3fc; stroke-width: 4; stroke-linecap: round; }
+.gauge-needle circle { fill: #f3f3fc; }
+.gauge-needle.ok line { stroke: var(--green); }
+.gauge-needle.ok circle { fill: var(--green); }
+.gauge-needle.idle { opacity: 0.25; }
+.tuner-note { margin-top: -14px; font-family: 'Space Grotesk', sans-serif; line-height: 1; }
+.tuner-note b { font-size: 4.2rem; }
+.tuner-note sub { font-size: 1.4rem; color: var(--muted); margin-left: 2px; }
+.tuner-read.ok .tuner-note b { color: var(--green); }
+.tuner-info { display: flex; gap: 12px; justify-content: center; align-items: center; margin-top: 8px; font-weight: 600; min-height: 28px; }
+.tuner-verdict { margin: 8px 0 0; font-size: 1.1rem; font-weight: 600; min-height: 1.6em; }
+.string-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 10px; }
+.string-chip small { color: inherit; margin-right: 2px; }
+.string-chip.hit:not(.active) { border-color: var(--cyan); color: var(--text); }
+.a4-value { min-width: 3ch; text-align: center; font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; }
+@media (prefers-reduced-motion: reduce) { .gauge-needle, .level span { transition: none; } }

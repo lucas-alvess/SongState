@@ -38,6 +38,9 @@ export function ExerciseList() {
         </div>
         <Icon name="back" size={18} />
       </Link>
+      <p className="muted small-text" style={{ margin: '0 0 12px' }}>
+        <Link to="/afinador">Afinador pelo microfone →</Link> · <Link to="/progresso">Meu progresso →</Link>
+      </p>
       <div className="filter-rows">
         <Chips small value={cat} onChange={setCat} options={CATEGORIES.map((c) => ({ value: c, label: c }))} />
         <Chips small value={lvl} onChange={setLvl} options={LEVELS.map((c) => ({ value: c, label: c }))} />

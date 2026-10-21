@@ -85,3 +85,21 @@ export function strum(midis: number[], gap = 0.045, vol = 0.28) {
   const t = c.currentTime + 0.02;
   midis.forEach((m, i) => pluck(c, m, t + i * gap, vol));
 }
+
+/** Tom de referência (onda triangular) para afinar de ouvido. Devolve a duração em segundos. */
+export function refTone(freq: number, seconds = 2): number {
+  const c = getCtx();
+  const t = c.currentTime + 0.02;
+  const o = c.createOscillator();
+  const g = c.createGain();
+  o.type = 'triangle';
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.25, t + 0.04);
+  g.gain.setValueAtTime(0.25, t + seconds - 0.4);
+  g.gain.exponentialRampToValueAtTime(0.0005, t + seconds);
+  o.connect(g).connect(c.destination);
+  o.start(t);
+  o.stop(t + seconds + 0.05);
+  return seconds;
+}
