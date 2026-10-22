@@ -146,4 +146,16 @@ export interface Integrations {
   spotifyClientId: string;
   youtubeKey: string;
 }
-export const useIntegrations = () => useLocalStorage<Integrations>('ss.integrations', { spotifyClientId: '', youtubeKey: '' });
+/**
+ * IDs públicos embutidos no site pelo dono (variáveis VITE_SPOTIFY_CLIENT_ID e VITE_YOUTUBE_KEY no build).
+ * Quando existem, os usuários só clicam em "Conectar"; sem eles, cada um pode informar o seu em Configurações.
+ */
+export const BUILT_IN: Integrations = {
+  spotifyClientId: String(import.meta.env.VITE_SPOTIFY_CLIENT_ID ?? '').trim(),
+  youtubeKey: String(import.meta.env.VITE_YOUTUBE_KEY ?? '').trim(),
+};
+
+export function useIntegrations(): [Integrations, (v: Integrations | ((p: Integrations) => Integrations)) => void] {
+  const [stored, set] = useLocalStorage<Integrations>('ss.integrations', { spotifyClientId: '', youtubeKey: '' });
+  return [{ spotifyClientId: BUILT_IN.spotifyClientId || stored.spotifyClientId, youtubeKey: BUILT_IN.youtubeKey || stored.youtubeKey }, set];
+}

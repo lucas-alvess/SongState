@@ -90,6 +90,23 @@ Depois de conectar o Spotify, use **Testar conexão** (Configurações → Spoti
 
 Inter e Space Grotesk (licença OFL, em `public/fonts`) são servidas pelo próprio site e guardadas pelo service worker: nenhuma requisição ao Google Fonts, e o visual é o mesmo offline.
 
+## Para quem publica o site: IDs embutidos (usuários não configuram nada)
+
+Google, Spotify e YouTube exigem um cadastro **do dono do app**, feito uma única vez. Os usuários só clicam em "Entrar com o Google" e "Conectar ao Spotify". Crie os IDs (passos nas seções abaixo) e guarde-os como **variáveis** do repositório (*Settings → Secrets and variables → Actions → Variables*):
+
+| Variável | O que é |
+|---|---|
+| `GOOGLE_CLIENT_ID` | ID do cliente OAuth do Google (login e sincronização) |
+| `SPOTIFY_CLIENT_ID` | Client ID do app no painel do Spotify (não use o Client Secret) |
+| `YOUTUBE_KEY` | Chave da YouTube Data API v3, restrita por referenciador HTTP ao seu domínio |
+
+São valores públicos por natureza (ficam visíveis no navegador); a proteção vem das restrições de domínio configuradas nos painéis. Com a variável definida, o campo correspondente some das Configurações. Sem ela, cada pessoa ainda pode informar o seu ID.
+
+Limites a conhecer:
+- **Google:** em *Testando*, só os e-mails cadastrados como usuários de teste entram (até 100) e a autorização vence em 7 dias. Para qualquer pessoa usar, publique o app (*Tela de consentimento → Publicar app*); o escopo `drive.appdata` não exige verificação.
+- **Spotify:** apps em modo de desenvolvimento aceitam até **25 pessoas**, cadastradas uma a uma por e-mail em *User Management*. Abrir para todos exige pedir "extended quota" ao Spotify (revisão deles). O player completo exige Premium de quem usa.
+- **YouTube:** a cota diária (10.000 unidades, cerca de 100 buscas) é **compartilhada por todos os usuários** do site.
+
 ## Login Google e sincronização (opcional)
 
 Entrando com o Google, seus dados passam a ficar também na **sua conta**, numa pasta oculta do Drive (`appDataFolder`) que só o SongState enxerga — o app pede só a permissão `drive.appdata` e o e-mail. Sem login, tudo segue como antes (somente neste navegador). **Offline primeiro:** os dados sempre ficam no aparelho; o envio acontece quando há internet e login válido.

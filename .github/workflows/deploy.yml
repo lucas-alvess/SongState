@@ -31,6 +31,8 @@ jobs:
         env:
           # Client ID do login Google (público). Defina em Settings > Secrets and variables > Actions > Variables
           VITE_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+          VITE_SPOTIFY_CLIENT_ID: ${{ vars.SPOTIFY_CLIENT_ID }}
+          VITE_YOUTUBE_KEY: ${{ vars.YOUTUBE_KEY }}
       - name: Acessibilidade (axe-core)
         run: npm run a11y
       - name: Testes de interface (Chrome, microfone e Google simulados)

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Field } from './ui';
 import { Icon } from './Icon';
 import { logoutSpotify, loginSpotify, redirectUri, spotifyCheck, useSpotifyConnected, isMobileBrowser, type SpotifyCheck } from '../lib/spotify';
-import { useIntegrations } from '../lib/storage';
+import { BUILT_IN, useIntegrations } from '../lib/storage';
 import { explainYoutubeError, youtubeSearch } from '../lib/youtube';
 
 export function Integrations() {
@@ -21,6 +21,8 @@ export function Integrations() {
       setTest({ state: 'error', msg: explainYoutubeError((e as Error).message, window.location.origin) });
     }
   };
+  const ytBuiltIn = !!BUILT_IN.youtubeKey;
+  const spBuiltIn = !!BUILT_IN.spotifyClientId;
   const uri = redirectUri();
   const badHost = window.location.hostname === 'localhost';
 
@@ -30,9 +32,14 @@ export function Integrations() {
         <h3>
           <span className="dock-prov youtube">YouTube</span> Busca de vídeos
         </h3>
-        <p className="muted small-text">
-          Tocar um vídeo não exige configuração (cole o link). Para <b>buscar</b> dentro do site, informe uma chave gratuita da YouTube Data API v3 — cota diária de cerca de 100 buscas.
-        </p>
+        {ytBuiltIn ? (
+          <p className="muted small-text">A busca de vídeos já está pronta para uso em Backing → Buscar e ouvir. Para tocar um vídeo, também dá para colar o link.</p>
+        ) : (
+          <p className="muted small-text">
+            Tocar um vídeo não exige configuração (cole o link). Para <b>buscar</b> dentro do site, informe uma chave gratuita da YouTube Data API v3 — cota diária de cerca de 100 buscas.
+          </p>
+        )}
+        {!ytBuiltIn && (<>
         <Field label="Chave de API">
           <input
             type="password"
@@ -75,6 +82,7 @@ export function Integrations() {
             <li>Cole a chave acima. Ela fica salva só neste navegador.</li>
           </ol>
         </details>
+        </>)}
       </section>
 
       <section className="panel soft">
@@ -82,7 +90,7 @@ export function Integrations() {
           <span className="dock-prov spotify">Spotify</span> Busca e player completo
         </h3>
         <p className="muted small-text">
-          Toca as faixas completas dentro do site (exige conta <b>Premium</b> e navegador de computador). Em celular, o Spotify só permite o player embutido.
+          Toca as faixas completas dentro do site (exige conta <b>Premium</b> e navegador de computador). Em celular, o Spotify só permite o player embutido.{spBuiltIn ? ' É só conectar a sua conta.' : ''}
         </p>
         {badHost && (
           <div className="form-warn">
@@ -90,6 +98,7 @@ export function Integrations() {
           </div>
         )}
         {isMobileBrowser() && <div className="form-warn">Neste dispositivo o player completo do Spotify não está disponível.</div>}
+        {!spBuiltIn && (<>
         <Field label="Client ID">
           <input value={cfg.spotifyClientId} onChange={(e) => setCfg({ ...cfg, spotifyClientId: e.target.value.trim() })} placeholder="32 caracteres do painel de desenvolvedor" />
         </Field>
@@ -109,6 +118,7 @@ export function Integrations() {
             </button>
           </div>
         </Field>
+        </>)}
         <div className="row gap wrap">
           {connected ? (
             <>
@@ -147,6 +157,7 @@ export function Integrations() {
             <li>{check.ok ? 'Tudo certo: o player completo deve funcionar.' : 'Corrija os itens com ✗ e teste de novo.'}</li>
           </ul>
         )}
+        {!spBuiltIn && (
         <details>
           <summary>Como obter o Client ID</summary>
           <ol className="steps-list">
@@ -165,6 +176,7 @@ export function Integrations() {
             <li>Cole o Client ID aqui e clique em <b>Conectar ao Spotify</b>.</li>
           </ol>
         </details>
+        )}
       </section>
     </div>
   );
