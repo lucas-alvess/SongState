@@ -91,7 +91,7 @@ async function newPage(browser, { width = 1100, external = null } = {}) {
   p.on('pageerror', (e) => p.errs.push(`pageerror: ${e.message}`));
   p.on('console', (m) => m.type() === 'error' && !/Failed to load resource/.test(m.text()) && p.errs.push(`console: ${m.text()}`));
   p.on('dialog', (d) => d.accept());
-  if (external) p.on('request', (r) => !/^(http:\/\/127\.0\.0\.1|data:|blob:|about:)/.test(r.url()) && external.push(r.url()));
+  if (external) p.on('request', (r) => !/^(http:\/\/127\.0\.0\.1|data:|blob:|about:|https:\/\/www\.googleapis\.com\/youtube\/)/.test(r.url()) && external.push(r.url().replace(/([?&]key=)[^&]*/, '$1***')));
   await p.evaluateOnNewDocument(() => {
     window.__streams = [];
     const md = navigator.mediaDevices;
@@ -113,6 +113,12 @@ async function smoke() {
   const browser = await launch();
   const external = [];
   const p = await newPage(browser, { external });
+  // com a chave do YouTube embutida no build, a busca do site chama a API: bloqueia (não gasta a cota nem depende da rede)
+  await p.setRequestInterception(true);
+  p.on('request', (r) => {
+    if (/^https:\/\/www\.googleapis\.com\/youtube\//.test(r.url())) r.abort().catch(() => {});
+    else r.continue().catch(() => {});
+  });
   const seen = new Set();
   const queue = ['/', '/estudos', '/exercicios', '/treino', '/progresso', '/afinador', '/acordes', '/campos', '/referencia', '/dados', '/backing', '/backing/jam', '/backing/buscar', '/backing/looper'];
   const broken = [];
