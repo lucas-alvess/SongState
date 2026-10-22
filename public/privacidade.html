@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark light" />
+<meta name="description" content="Como o SongState trata seus dados: tudo fica no seu aparelho e, se você quiser, na pasta oculta do seu Google Drive." />
+<meta name="robots" content="index, follow" />
+<link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+<title>Política de Privacidade — SongState</title>
+<style>
+@font-face { font-family: 'Inter'; font-weight: 400; font-display: swap; src: url('./fonts/inter-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 700; font-display: swap; src: url('./fonts/inter-latin-700-normal.woff2') format('woff2'); }
+:root { --bg: #090912; --surface: #151528; --border: #29294a; --text: #f3f3fc; --muted: #b4b4d6; --link: #67e8f9; }
+@media (prefers-color-scheme: light) { :root { --bg: #f7f7fc; --surface: #ffffff; --border: #d9d9ec; --text: #14142b; --muted: #4a4a6a; --link: #0b6bcb; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; }
+main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+header { margin-bottom: 24px; }
+header a.brand { color: var(--text); font-weight: 700; text-decoration: none; font-size: 1.1rem; }
+h1 { font-size: 1.8rem; line-height: 1.25; margin: 14px 0 6px; }
+h2 { font-size: 1.2rem; margin: 32px 0 8px; }
+.muted { color: var(--muted); font-size: 0.92rem; }
+a { color: var(--link); }
+ul { padding-left: 22px; }
+li { margin: 4px 0; }
+.box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px; margin: 16px 0; }
+footer { margin-top: 40px; border-top: 1px solid var(--border); padding-top: 16px; }
+</style>
+</head>
+<body>
+<main>
+<header><a class="brand" href="./">SongState</a></header>
+
+<h1>Política de Privacidade</h1>
+<p class="muted">Última atualização: 22 de outubro de 2026</p>
+
+<p>O <b>SongState</b> é um aplicativo web gratuito para estudar guitarra (braço interativo, estudos, exercícios, acordes, backing tracks, afinador e looper), disponível em <a href="https://lucas-alvess.github.io/SongState/">lucas-alvess.github.io/SongState</a>. Esta política explica quais dados o aplicativo usa, onde ficam guardados e quais são os seus direitos. Em resumo: <b>o SongState não tem servidor próprio, não exibe anúncios, não usa ferramentas de análise e não vende nem compartilha dados com ninguém.</b></p>
+
+<h2>1. Quem somos</h2>
+<p>O SongState é mantido por Lucas Alves, desenvolvedor independente, responsável por esta política. Para dúvidas ou pedidos, abra uma conversa em <a href="https://github.com/lucas-alvess/SongState/issues">github.com/lucas-alvess/SongState/issues</a>.</p>
+
+<h2>2. Dados que ficam no seu aparelho</h2>
+<p>Tudo o que você cria ou configura no aplicativo é guardado <b>no seu próprio navegador</b> (armazenamento local e IndexedDB), sem passar por servidor nosso:</p>
+<ul>
+<li>músicas e cifras que você cadastra, estudos próprios e anotações;</li>
+<li>progresso das lições, resultados dos exercícios, revisão espaçada do Treino, dias e tempo de estudo, metas;</li>
+<li>loops, gravações e arquivos de áudio que você importa ou grava;</li>
+<li>preferências de tela (nomes das notas, afinação, orientação etc.).</li>
+</ul>
+<p>Você pode exportar tudo em um arquivo de backup ou apagar tudo a qualquer momento em <b>Configurações → Backup e armazenamento</b>. Limpar os dados do site no navegador também apaga tudo.</p>
+
+<h2>3. Microfone</h2>
+<p>O afinador e o looper pedem acesso ao microfone somente quando você ativa essas funções. O som é processado <b>no seu aparelho</b>, em tempo real, e não é enviado a nenhum servidor. O microfone é desligado ao sair da tela ou ao esconder a aba. As gravações que você salvar ficam no seu aparelho e só vão para o Google Drive se você ligar a sincronização de áudios (item 4).</p>
+
+<h2>4. Login com o Google e sincronização (opcional)</h2>
+<p>O login é opcional: o aplicativo funciona por inteiro sem ele. Se você escolher <b>Entrar com o Google</b>:</p>
+<ul>
+<li>O login é feito pelo serviço Google Identity Services. O SongState solicita estas permissões: o seu <b>endereço de e-mail</b> (para mostrar qual conta está ligada) e o acesso à <b>pasta oculta do aplicativo no seu Google Drive</b> (escopo <code>drive.appdata</code>).</li>
+<li>Esse escopo só permite ao SongState ler e gravar <b>os arquivos que ele mesmo criou</b> nessa pasta. O aplicativo <b>não tem acesso</b> aos seus outros arquivos do Drive, nem a e-mails, contatos ou agenda.</li>
+<li>Os dados sincronizados são: músicas, estudos próprios, progresso, estatísticas, revisão espaçada e dias de estudo; e, <b>apenas se você ligar a opção</b>, loops, gravações e arquivos de áudio.</li>
+<li>Os dados vão <b>direto do seu navegador para o seu Google Drive</b>. Eles não passam por nenhum servidor do SongState e o desenvolvedor não tem acesso a eles.</li>
+<li>O token de acesso do Google fica apenas na memória do navegador e deixa de existir ao fechar ou recarregar a página. O seu e-mail fica guardado só no seu aparelho.</li>
+<li>Preferências de tela e chaves do Spotify/YouTube nunca são sincronizadas.</li>
+</ul>
+<p>O uso e a transferência, para qualquer outro aplicativo, das informações recebidas das APIs do Google seguirão a <a href="https://developers.google.com/terms/api-services-user-data-policy">Política de Dados do Usuário dos Serviços de API do Google</a>, incluindo os requisitos de Uso Limitado. Os dados do Google são usados <b>exclusivamente</b> para oferecer a sincronização entre os seus aparelhos: não são usados para publicidade, não são vendidos, não são transferidos a terceiros e não são lidos por pessoas.</p>
+
+<div class="box">
+<p style="margin:0"><b>Como revogar ou apagar:</b></p>
+<ul style="margin:6px 0 0">
+<li>Em <b>Configurações → Conta e sincronização → Desconectar</b>, o SongState para de sincronizar e revoga o acesso.</li>
+<li>Em <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>, você remove o acesso do SongState à sua conta.</li>
+<li>Para apagar os dados guardados no Drive: <a href="https://drive.google.com/drive/settings">Drive → Configurações → Gerenciar aplicativos</a>, escolha SongState e <i>Excluir dados ocultos do aplicativo</i>.</li>
+</ul>
+</div>
+
+<h2>5. Spotify e YouTube (opcional)</h2>
+<ul>
+<li><b>YouTube:</b> ao buscar vídeos, o termo digitado é enviado à API do YouTube (Google) para obter os resultados. Ao tocar um vídeo, o player do YouTube é carregado dentro da página e passa a seguir os <a href="https://policies.google.com/privacy">termos e a política de privacidade do Google</a>.</li>
+<li><b>Spotify:</b> se você conectar a sua conta, o login é feito no site do Spotify (fluxo PKCE, sem senha no SongState). Os tokens ficam apenas no seu navegador. O SongState solicita as permissões necessárias para tocar música no player e controlar a reprodução (<code>streaming</code>, <code>user-read-email</code>, <code>user-read-private</code>, <code>user-read-playback-state</code> e <code>user-modify-playback-state</code>). Os dados do Spotify não são armazenados nem enviados a nenhum servidor nosso. Veja a <a href="https://www.spotify.com/legal/privacy-policy/">política de privacidade do Spotify</a>.</li>
+</ul>
+<p>Esses tokens e chaves nunca entram em backups nem na sincronização, e você pode desconectar quando quiser.</p>
+
+<h2>6. Cookies, análise e anúncios</h2>
+<p>O SongState não usa cookies próprios, não possui anúncios e não utiliza Google Analytics nem outra ferramenta de rastreamento. As fontes e os arquivos do aplicativo são servidos pelo próprio site, e o aplicativo guarda uma cópia no navegador (service worker) para funcionar offline. O site é hospedado no GitHub Pages, cujo provedor pode registrar dados técnicos de acesso (como o endereço IP), conforme a <a href="https://docs.github.com/pt/site-policy/privacy-policies/github-general-privacy-statement">política de privacidade do GitHub</a>.</p>
+
+<h2>7. Crianças</h2>
+<p>O aplicativo não é direcionado a menores de 13 anos e não coleta dados pessoais deliberadamente. Como não há coleta em servidor, o responsável pode apagar todos os dados do aparelho a qualquer momento.</p>
+
+<h2>8. Seus direitos</h2>
+<p>Como os seus dados ficam com você (no aparelho e na sua conta do Google), você pode acessá-los, exportá-los, corrigi-los e apagá-los por conta própria, como descrito acima. Nos termos da Lei Geral de Proteção de Dados (LGPD, Lei 13.709/2018), você também pode solicitar informações pelo contato do item 1.</p>
+
+<h2>9. Segurança</h2>
+<p>A comunicação com o Google e o Spotify usa HTTPS. Tudo o que é importado de um backup ou recebido da nuvem é validado antes de ser usado. Nenhum método é totalmente infalível: mantenha o seu aparelho e a sua conta do Google protegidos.</p>
+
+<h2>10. Alterações</h2>
+<p>Esta política pode ser atualizada. A data no topo mostra a versão mais recente. Mudanças relevantes serão indicadas no próprio aplicativo ou no repositório do projeto.</p>
+
+<footer class="muted">
+<p><a href="./privacidade.html">Política de Privacidade</a> · <a href="./termos.html">Termos de Serviço</a> · <a href="./">Voltar ao SongState</a></p>
+</footer>
+</main>
+</body>
+</html>

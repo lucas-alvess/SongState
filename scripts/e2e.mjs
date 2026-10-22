@@ -132,6 +132,12 @@ async function smoke() {
     for (const l of info.links) if (!seen.has(l)) queue.push(l);
   }
   ok(`${visited} rotas e links internos abrem com conteúdo`, broken.length === 0 && visited >= 60, broken.join(' | ') || `só ${visited} rotas`);
+  for (const [file, title] of [['privacidade.html', 'Política de Privacidade'], ['termos.html', 'Termos de Serviço']]) {
+    const r = await fetch(`${BASE}${file}`);
+    const html = await r.text();
+    ok(`${file} é público e tem o conteúdo`, r.ok && html.includes(title) && html.includes('<html lang="pt-BR">'), String(r.status));
+  }
+  ok('rodapé com links de privacidade e termos', await p.evaluate(() => !!document.querySelector('.legal-foot a[href$="privacidade.html"]') && !!document.querySelector('.legal-foot a[href$="termos.html"]')));
   ok('sem erros de JavaScript', p.errs.length === 0, p.errs.slice(0, 3).join(' | '));
   ok('nenhuma requisição externa (fontes, scripts e dados são do próprio site)', external.length === 0, external.slice(0, 3).join(' '));
   const mobile = await newPage(browser, { width: 390 });

@@ -75,6 +75,9 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
         <Link to="/dados" className="btn" onClick={onClose}>
           <Icon name="download" size={16} /> Backup e armazenamento
         </Link>
+        <p className="small-text">
+          <a href={`${import.meta.env.BASE_URL}privacidade.html`} target="_blank" rel="noreferrer">Política de Privacidade</a> · <a href={`${import.meta.env.BASE_URL}termos.html`} target="_blank" rel="noreferrer">Termos de Serviço</a>
+        </p>
         <p className="muted small-text">Tudo é salvo neste navegador. Só sai do aparelho se você entrar com o Google e ligar a sincronização, ou exportar um backup.</p>
       </div>
     </div>

@@ -705,3 +705,6 @@ i.heat.l4 { background: #c4b0ff; }
 .sync-advanced input { width: 100%; margin-top: 6px; }
 
 .check-list { list-style: none; padding: 0; margin: 10px 0 0; font-size: 0.9rem; display: grid; gap: 4px; }
+
+.legal-foot { margin: 40px 0 8px; text-align: center; font-size: 0.85rem; color: var(--muted); }
+.legal-foot a { color: var(--muted); }

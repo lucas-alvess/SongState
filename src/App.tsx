@@ -127,6 +127,9 @@ export default function App() {
               <Route path="/backing/:id" element={<SongPage />} />
             </Routes>
             </SafeRoutes>
+            <footer className="legal-foot">
+              <a href={`${import.meta.env.BASE_URL}privacidade.html`}>Privacidade</a> · <a href={`${import.meta.env.BASE_URL}termos.html`}>Termos de Serviço</a>
+            </footer>
           </main>
           <nav className="tabbar" aria-label="Navegação inferior">
             {NAV.map((n) => (
