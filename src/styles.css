@@ -708,3 +708,5 @@ i.heat.l4 { background: #c4b0ff; }
 
 .legal-foot { margin: 40px 0 8px; text-align: center; font-size: 0.85rem; color: var(--muted); }
 .legal-foot a { color: var(--muted); }
+
+.btn.active { background: var(--surface-3); border-color: var(--cyan); color: var(--text); }

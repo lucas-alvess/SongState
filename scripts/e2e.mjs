@@ -1,11 +1,12 @@
 /**
  * Testes de interface no Chrome real, sobre o build em dist/ (microfone e Google/Drive simulados).
  * Uso: npm run build && npm run e2e   (precisa do Chrome/Chromium; informe CHROME_PATH se não for achado)
- *      npm run e2e -- tuner sync      (roda só algumas suítes: smoke, tuner, looper, sync)
+ *      npm run e2e -- tuner sync      (roda só algumas suítes: smoke, tuner, looper, sync, dock)
  *
  * - smoke:  abre todas as rotas e todos os links internos achados nelas; sem erro de JS e sem requisição externa.
  * - tuner:  afinador com microfone simulado (A2 afinada, E2 +25 cents), filtros desligados e microfone solto ao sair.
  * - looper: grava 2 compassos a 120 BPM (clique a cada 0,5 s): o áudio tem exatamente 4,000 s e 8 cliques no tempo.
+ * - dock:   loop A–B do reprodutor fixo (YouTube simulado): ligar, pausar, retomar, seguir após o B, reiniciar, limpar.
  * - sync:   login do Google e Drive simulados, dois aparelhos, exclusão, offline, sessão vencida e desconectar.
  */
 import { createServer } from 'node:http';
@@ -348,8 +349,114 @@ async function sync() {
   await browser.close();
 }
 
+// ================= loop A–B do reprodutor fixo =================
+async function dock() {
+  // YouTube de mentira: relógio virtual 2× mais rápido, para o teste não demorar
+  const FAKE_YT = `(function(){
+    function Player(el, opts){
+      var self=this, pos=0, playing=false, last=performance.now(), SPEED=2;
+      function cur(){ return Math.min(300, pos + (playing ? (performance.now()-last)/1000*SPEED : 0)); }
+      self.playVideo=function(){ pos=cur(); last=performance.now(); playing=true; };
+      self.pauseVideo=function(){ pos=cur(); playing=false; };
+      self.seekTo=function(s){ pos=s; last=performance.now(); };
+      self.getCurrentTime=cur; self.getDuration=function(){ return 300; };
+      self.getPlayerState=function(){ return playing?1:2; };
+      self.loadVideoById=function(){ pos=0; self.playVideo(); };
+      self.setPlaybackRate=function(){}; self.setVolume=function(){}; self.getVolume=function(){ return 80; };
+      self.mute=function(){}; self.unMute=function(){}; self.destroy=function(){};
+      window.__yt=self; window.__ytpos=cur;
+      setTimeout(function(){ opts.events && opts.events.onReady && opts.events.onReady({target:self}); },30);
+    }
+    window.YT={Player:Player, PlayerState:{PLAYING:1,PAUSED:2}};
+    setTimeout(function(){ window.onYouTubeIframeAPIReady && window.onYouTubeIframeAPIReady(); },10);
+  })();`;
+  const browser = await launch();
+  const p = await newPage(browser);
+  await p.setRequestInterception(true);
+  p.on('request', (r) => {
+    const url = r.url();
+    if (url.includes('youtube.com/iframe_api')) r.respond({ status: 200, contentType: 'text/javascript', body: FAKE_YT }).catch(() => {});
+    else if (/^http:\/\/127\.0\.0\.1/.test(url) || /^(data|blob):/.test(url)) r.continue().catch(() => {});
+    else r.abort().catch(() => {});
+  });
+  await p.goto(BASE, { waitUntil: 'networkidle0' });
+  await p.evaluate(() =>
+    localStorage.setItem('ss.songs', JSON.stringify([{ id: 'm-yt', title: 'Demo', artist: 'x', keyPc: 0, minor: false, bpm: 100, tags: [], notes: '', createdAt: 1, chart: '| C | G |', style: 'rock', sources: [{ id: 's1', kind: 'youtube', label: 'Vídeo', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', embed: 'https://www.youtube.com/embed/dQw4w9WgXcQ', ytId: 'dQw4w9WgXcQ' }] }])),
+  );
+  await goto(p, '/backing/m-yt');
+  await p.reload({ waitUntil: 'networkidle0' });
+  await waitFor(() => click(p, 'Ouvir'), 8000);
+  const pos = () => p.evaluate(() => window.__ytpos?.() ?? -1);
+  const status = () => p.evaluate(() => [...document.querySelectorAll('.dock [role=status]')].map((e) => e.textContent).join(' '));
+  const btn = (t) => p.evaluate((t) => [...document.querySelectorAll('.dock button')].some((b) => b.textContent.trim().startsWith(t) && !b.disabled), t);
+  const dockClick = (t) => click(p, t, '.dock button');
+  // pausa o vídeo falso ao posicionar, para marcar A/B exatamente no ponto pedido
+  const seek = async (s) => {
+    await p.evaluate((s) => { window.__yt.pauseVideo(); window.__yt.seekTo(s); }, s);
+    await sleep(450);
+  };
+  const sample = async (n, gap) => {
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      out.push(await pos());
+      await sleep(gap);
+    }
+    return out;
+  };
+
+  ok('o reprodutor toca (relógio avança)', await waitFor(async () => (await pos()) > 1, 8000));
+  ok('sem A e B, "Ligar loop" e "Reiniciar" ficam desativados', !(await btn('Ligar loop')) && !(await btn('Reiniciar')));
+  await seek(10);
+  await dockClick('A ');
+  await seek(14);
+  await dockClick('B ');
+  await p.evaluate(() => window.__yt.playVideo());
+  ok('com A e B válidos, ligar e reiniciar ficam disponíveis', (await btn('Ligar loop')) && (await btn('Reiniciar')));
+  await dockClick('Ligar loop');
+  ok('ligar leva ao A e avisa que está repetindo', (await waitFor(async () => /Repetindo de 0:10 a 0:14/.test(await status()), 3000)) && (await pos()) < 12);
+  const s1 = await sample(24, 120);
+  ok('repete: a posição não passa do B (14 s) além da folga da leitura', s1.every((x) => x >= 9.5 && x < 15.6), s1.map((x) => x.toFixed(1)).join(' '));
+  ok('e volta ao A várias vezes', s1.some((x, i) => i > 0 && x < s1[i - 1] - 2));
+
+  await dockClick('Pausar loop');
+  ok('pausar loop: avisa, guarda A–B e oferece "Retomar loop"', (await waitFor(async () => /Loop pausado \(0:10–0:14\)/.test(await status()), 2000)) && (await btn('Retomar loop')));
+  ok('pausado: a música segue além do B', await waitFor(async () => (await pos()) > 16, 4000));
+  await dockClick('Retomar loop');
+  ok('retomar fora do trecho volta ao A e repete de novo', (await waitFor(async () => (await pos()) < 15, 2500)) && /Repetindo/.test(await status()));
+  const s2 = await sample(16, 120);
+  ok('depois de retomar, continua entre A e B', s2.every((x) => x >= 9.5 && x < 15.6), s2.map((x) => x.toFixed(1)).join(' '));
+
+  await dockClick('Seguir após o B');
+  ok('"seguir após o B" avisa o que vai acontecer', /seguir adiante ao chegar no B/.test(await status()));
+  ok('chega ao B, segue em frente e o loop fica pausado', (await waitFor(async () => (await pos()) > 16, 5000)) && /Loop pausado/.test(await status()));
+
+  await dockClick('Reiniciar');
+  ok('reiniciar volta ao A e liga o loop', (await waitFor(async () => (await pos()) < 12, 2500)) && /Repetindo/.test(await status()));
+  await p.evaluate(() => window.__yt.pauseVideo());
+  await sleep(500);
+  await dockClick('Reiniciar');
+  ok('reiniciar com a música pausada também toca', await waitFor(async () => (await p.evaluate(() => window.__yt.getPlayerState())) === 1, 2500));
+
+  await dockClick('Limpar A–B');
+  ok(
+    'limpar apaga A e B e desliga o loop',
+    await p.evaluate(() => {
+      const t = [...document.querySelectorAll('.dock button')].map((b) => b.textContent.trim());
+      return t.includes('A –') && t.includes('B –') && !t.some((x) => x.includes('Limpar A–B') || x.includes('Pausar loop'));
+    }),
+  );
+
+  await seek(40);
+  await dockClick('A ');
+  await seek(30);
+  await dockClick('B ');
+  ok('B antes do A: avisa e não deixa ligar', /precisa vir depois do A/.test(await status()) && !(await btn('Ligar loop')));
+  ok('sem erros de JS', p.errs.length === 0, p.errs.join(' | '));
+  await browser.close();
+}
+
 // ================= execução =================
-const SUITES = { smoke, tuner, looper, sync };
+const SUITES = { smoke, tuner, looper, sync, dock };
 const wanted = process.argv.slice(2).filter((a) => a in SUITES);
 for (const name of wanted.length ? wanted : Object.keys(SUITES)) {
   suite = name;

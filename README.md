@@ -19,7 +19,7 @@ Site pessoal para estudar guitarra: braço interativo, estudos em capítulos, ex
 | **Campos** | Campos harmônicos (maior, menores natural/harmônica/melódica, maior harmônica e os modos) em **tabela**, **círculo das quintas**, **roda do campo**, **todos os 12 tons** e **comparação** entre campos. Tríades e tétrades, funções (T, SD, D), progressões comuns, áudio e **modo estudo** que esconde as respostas. | Cada progressão tem **Tocar na base**, que abre no Backing no tom escolhido, e dá para **montar a sua** (até 12 acordes).
 | **Acordes** | Clique nas casas e o site descobre o acorde (cifra e nome por extenso). Dicionário com 29 tipos e digitações geradas por algoritmo. |
 | **Referência** | Glossário de termos e tabelas de escalas, intervalos, acordes e armaduras de clave (geradas pelos mesmos dados do app). |
-| **Backing** | Cifra → base tocada no site (bateria, baixo e acordes) com transposição e contagem; jam tracks; busca e reprodução de YouTube e Spotify sem sair do site. |
+| **Backing** | Cifra → base tocada no site (bateria, baixo e acordes) com transposição e contagem; jam tracks; busca e reprodução de YouTube e Spotify sem sair do site, com **loop A–B** administrável no reprodutor fixo: marcar A e B, ligar, **pausar** (a música segue e os pontos ficam guardados), **retomar**, **reiniciar** do A, **seguir após o B** (termina o ciclo e continua) e limpar. |
 
 ## Rodar localmente
 

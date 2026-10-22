@@ -5,6 +5,7 @@ import { spotifyParts, usePlayer, type Track } from '../lib/player';
 import { getSpotifyPlayer, isMobileBrowser, startSpotifyPlayback, useSpotifyConnected, type SpotifyHandle } from '../lib/spotify';
 import { loadYouTubeApi } from '../lib/youtube';
 import { useLocalStorage } from '../lib/storage';
+import { EMPTY_LOOP, clearLoop, engage, loopValid, pauseLoop, setPoint, tick, toggleExit, type LoopState } from '../lib/looprange';
 
 const fmt = (s: number) => {
   if (!isFinite(s) || s < 0) s = 0;
@@ -32,14 +33,47 @@ interface ShellProps {
 }
 
 function Shell(p: ShellProps) {
-  const [loop, setLoop] = useState<{ a: number | null; b: number | null; on: boolean }>({ a: null, b: null, on: false });
+  const [loop, setLoop] = useState<LoopState>(EMPTY_LOOP);
+  const loopRef = useRef(loop);
+  loopRef.current = loop;
   const [vol, setVol] = useState(0.8);
+  const valid = loopValid(loop);
 
+  const apply = (next: LoopState) => {
+    loopRef.current = next;
+    setLoop(next);
+  };
+
+  // a cada atualização da posição: volta ao A ao passar do B (ou segue adiante, se foi pedido)
   useEffect(() => {
-    if (loop.on && loop.a !== null && loop.b !== null && loop.b > loop.a && p.pos >= loop.b) p.onSeek(loop.a);
+    const r = tick(loopRef.current, p.pos);
+    if (r.state !== loopRef.current) apply(r.state);
+    if (r.seekTo !== null) p.onSeek(r.seekTo);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.pos]);
-  useEffect(() => setLoop({ a: null, b: null, on: false }), [p.track.id, p.track.uri]);
+  useEffect(() => apply(EMPTY_LOOP), [p.track.id, p.track.uri]);
+
+  const turnOn = (jump: boolean) => {
+    const r = engage(loop, p.pos, jump);
+    apply(r.state);
+    if (r.seekTo !== null) p.onSeek(r.seekTo);
+  };
+  const restart = () => {
+    const r = engage(loop, p.pos, true);
+    apply(r.state);
+    if (r.seekTo !== null) p.onSeek(r.seekTo);
+    if (!p.playing) p.onToggle();
+  };
+  const status =
+    loop.a !== null && loop.b !== null && !valid
+      ? 'O ponto B precisa vir depois do A.'
+      : loop.mode === 'on'
+        ? loop.exitAtB
+          ? `Vai seguir adiante ao chegar no B (${fmt(loop.b as number)}).`
+          : `Repetindo de ${fmt(loop.a as number)} a ${fmt(loop.b as number)}.`
+        : loop.mode === 'paused'
+          ? `Loop pausado (${fmt(loop.a as number)}–${fmt(loop.b as number)}): a música segue normalmente.`
+          : '';
 
   return (
     <div className="dock-body">
@@ -75,29 +109,40 @@ function Shell(p: ShellProps) {
         <div className="dock-tools">
           <div className="dock-group">
             <span className="muted small-text">Loop</span>
-            <button type="button" className="btn small" onClick={() => setLoop((l) => ({ ...l, a: p.pos }))}>
+            <button type="button" className="btn small" onClick={() => apply(setPoint(loop, 'a', p.pos))} aria-label={`A ${loop.a === null ? 'sem ponto' : fmt(loop.a)}: marcar o início do loop na posição atual`}>
               A {loop.a === null ? '–' : fmt(loop.a)}
             </button>
-            <button type="button" className="btn small" onClick={() => setLoop((l) => ({ ...l, b: p.pos }))}>
+            <button type="button" className="btn small" onClick={() => apply(setPoint(loop, 'b', p.pos))} aria-label={`B ${loop.b === null ? 'sem ponto' : fmt(loop.b)}: marcar o fim do loop na posição atual`}>
               B {loop.b === null ? '–' : fmt(loop.b)}
             </button>
-            <button
-              type="button"
-              className={`btn small${loop.on ? ' primary' : ''}`}
-              disabled={loop.a === null || loop.b === null}
-              onClick={() => {
-                if (!loop.on && loop.a !== null) p.onSeek(loop.a);
-                setLoop((l) => ({ ...l, on: !l.on }));
-              }}
-            >
-              {loop.on ? 'Ligado' : 'Ligar'}
+            {loop.mode === 'on' ? (
+              <button type="button" className="btn small primary" onClick={() => apply(pauseLoop(loop))} title="Para de repetir; a música segue e os pontos A–B ficam guardados">
+                Pausar loop
+              </button>
+            ) : (
+              <button type="button" className="btn small primary" disabled={!valid} onClick={() => turnOn(loop.mode !== 'paused')} title={valid ? undefined : 'Marque A e B (com B depois de A)'}>
+                {loop.mode === 'paused' ? 'Retomar loop' : 'Ligar loop'}
+              </button>
+            )}
+            <button type="button" className="btn small" disabled={!valid} onClick={restart} title="Volta ao ponto A e toca de novo, repetindo">
+              Reiniciar
             </button>
+            {loop.mode === 'on' && (
+              <button type="button" className={`btn small${loop.exitAtB ? ' active' : ''}`} aria-pressed={loop.exitAtB} onClick={() => apply(toggleExit(loop))} title="Termina este ciclo e deixa a música continuar depois do B">
+                Seguir após o B
+              </button>
+            )}
             {(loop.a !== null || loop.b !== null) && (
-              <button type="button" className="btn small" onClick={() => setLoop({ a: null, b: null, on: false })}>
-                ✕
+              <button type="button" className="btn small" onClick={() => apply(clearLoop())} title="Apaga os pontos A e B">
+                Limpar A–B
               </button>
             )}
           </div>
+          {status && (
+            <div className="muted small-text" role="status">
+              {status}
+            </div>
+          )}
           {p.onRate && (
             <div className="dock-group">
               <span className="muted small-text">Velocidade</span>
