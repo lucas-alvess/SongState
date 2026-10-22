@@ -710,3 +710,35 @@ i.heat.l4 { background: #c4b0ff; }
 .legal-foot a { color: var(--muted); }
 
 .btn.active { background: var(--surface-3); border-color: var(--cyan); color: var(--text); }
+
+/* ---------- impressão de shapes, acordes e braços ---------- */
+.print-page { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.print-controls { position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow: auto; }
+.print-controls details { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
+.print-controls summary { cursor: pointer; font-weight: 700; margin-bottom: 6px; }
+.print-controls .field { margin: 10px 0; }
+.print-preview { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; min-width: 0; overflow-x: auto; }
+.print-sheet { background: #fff; color: #111; width: min(100%, var(--sheet-w, 297mm)); margin: 0 auto; padding: min(var(--sheet-pad, 12mm), 4vw); box-sizing: border-box; box-shadow: 0 6px 30px rgba(0, 0, 0, 0.45); font-family: Inter, system-ui, 'Segoe UI', sans-serif; line-height: 1.35; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.print-sheet h2 { margin: 0 0 2px; font-size: 1.35rem; color: #111; letter-spacing: 0; }
+.ps-head p { margin: 0 0 6px; font-size: 0.82rem; color: #333; }
+.ps-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 6px 0 10px; padding: 0; font-size: 0.8rem; color: #111; }
+.ps-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.ps-grid { display: grid; gap: 10px 14px; }
+.ps-card { margin: 0; break-inside: avoid; page-break-inside: avoid; min-width: 0; }
+.ps-card figcaption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: 0.86rem; color: #111; margin-bottom: 2px; }
+.ps-card figcaption span { font-size: 0.74rem; color: #444; }
+.ps-empty { color: #444; padding: 24px 0; }
+.ps-foot { margin-top: 12px; padding-top: 6px; border-top: 1px solid #ccc; font-size: 0.7rem; color: #555; text-align: right; }
+@media (max-width: 980px) {
+  .print-page { grid-template-columns: 1fr; }
+  .print-controls { position: static; max-height: none; }
+}
+
+@media print {
+  html, body { background: #fff !important; color: #000 !important; }
+  .topbar, .tabbar, .dock, .sheet-backdrop, .legal-foot, .page-header, .no-print { display: none !important; }
+  .app, .content { display: block !important; max-width: none !important; margin: 0 !important; padding: 0 !important; min-height: 0 !important; background: #fff !important; }
+  .print-page { display: block !important; }
+  .print-preview { background: none !important; border: 0 !important; padding: 0 !important; overflow: visible !important; border-radius: 0 !important; }
+  .print-sheet { width: auto !important; max-width: none !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
+}

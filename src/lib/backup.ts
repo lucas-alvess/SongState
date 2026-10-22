@@ -25,7 +25,7 @@ const KEY_SRS = 'ss.srs'; // revisão espaçada do Treino
 const KEY_DAYS = 'ss.days'; // resumo diário de estudo
 const KEY_LOOPS = LOOPS_KEY; // loops e gravações (o áudio vai junto só se o usuário marcar "incluir áudio")
 const STUDY_PROGRESS = /^ss\.study\.[\w-]{1,60}$/;
-const PREFS = /^ss\.(settings|board|chords|fields|jam|mix|dock|search|treino|goal|tuner|looper|studies\.tab|cfg\.[\w-]{1,40})$/;
+const PREFS = /^ss\.(settings|board|chords|fields|jam|mix|dock|search|treino|goal|tuner|looper|print|studies\.tab|cfg\.[\w-]{1,40})$/;
 
 /** Dados do usuário (têm regra de mesclagem própria). */
 export const isDataKey = (k: string) => k === KEY_SONGS || k === KEY_STUDIES || k === KEY_STATS || k === KEY_SRS || k === KEY_DAYS || k === KEY_LOOPS || STUDY_PROGRESS.test(k);

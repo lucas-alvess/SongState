@@ -71,6 +71,9 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
         <Link to="/afinador" className="btn" onClick={onClose}>
           <Icon name="ear" size={16} /> Afinador
         </Link>
+        <Link to="/imprimir" className="btn" onClick={onClose}>
+          <Icon name="download" size={16} /> Imprimir shapes, acordes e escalas
+        </Link>
         <h3 className="section-title">Seus dados</h3>
         <Link to="/dados" className="btn" onClick={onClose}>
           <Icon name="download" size={16} /> Backup e armazenamento

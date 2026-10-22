@@ -17,6 +17,7 @@ import { Data } from './pages/Data';
 import { Train } from './pages/Train';
 import { Progress } from './pages/Progress';
 import { Tuner } from './pages/Tuner';
+import { Print } from './pages/Print';
 import { SafeRoutes } from './components/ErrorBoundary';
 import { Backing } from './pages/Backing';
 import { SongPage } from './pages/SongPage';
@@ -116,6 +117,7 @@ export default function App() {
               <Route path="/treino" element={<Train />} />
               <Route path="/progresso" element={<Progress />} />
               <Route path="/afinador" element={<Tuner />} />
+              <Route path="/imprimir" element={<Print />} />
               <Route path="/acordes" element={<Chords />} />
               <Route path="/campos" element={<Fields />} />
               <Route path="/referencia" element={<Reference />} />

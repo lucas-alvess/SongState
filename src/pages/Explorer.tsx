@@ -1,7 +1,8 @@
 import { useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { DEFAULT_BOARD, ScaleBoard, type BoardState } from '../components/ScaleBoard';
 import { PageHeader } from '../components/ui';
+import { Icon } from '../components/Icon';
 import { useLocalStorage } from '../lib/storage';
 
 export function Explorer() {
@@ -24,7 +25,11 @@ export function Explorer() {
 
   return (
     <>
-      <PageHeader title="Braço" sub="Explore escalas, shapes e notas. Use os filtros para focar no que está memorizando." />
+      <PageHeader title="Braço" sub="Explore escalas, shapes e notas. Use os filtros para focar no que está memorizando.">
+        <Link to="/imprimir" className="btn small">
+          <Icon name="download" size={14} /> Imprimir
+        </Link>
+      </PageHeader>
       <ScaleBoard state={state} setState={setState} />
     </>
   );

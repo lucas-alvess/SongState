@@ -19,6 +19,7 @@ Site pessoal para estudar guitarra: braço interativo, estudos em capítulos, ex
 | **Campos** | Campos harmônicos (maior, menores natural/harmônica/melódica, maior harmônica e os modos) em **tabela**, **círculo das quintas**, **roda do campo**, **todos os 12 tons** e **comparação** entre campos. Tríades e tétrades, funções (T, SD, D), progressões comuns, áudio e **modo estudo** que esconde as respostas. | Cada progressão tem **Tocar na base**, que abre no Backing no tom escolhido, e dá para **montar a sua** (até 12 acordes).
 | **Acordes** | Clique nas casas e o site descobre o acorde (cifra e nome por extenso). Dicionário com 29 tipos e digitações geradas por algoritmo. |
 | **Referência** | Glossário de termos e tabelas de escalas, intervalos, acordes e armaduras de clave (geradas pelos mesmos dados do app). |
+| **Imprimir** | `#/imprimir` (também em Configurações e na tela Braço): monta folhas para papel ou PDF — **shapes da escala** (todas as posições ou as escolhidas), **braço inteiro** (só a escala, todas as notas ou em branco), **acordes** (tríades, tétrades e demais; digitações ou notas no braço todo), **campo harmônico** (tríades ou tétrades) e **braço em branco**. Rótulo nas notas: nome, grau ou nada; destaque da tônica, da tônica + subdominante + dominante (formas diferentes, legíveis em preto e branco) ou das notas do acorde. Escolhe afinação, canhoto, direção, A4/Carta, paisagem/retrato, margem, colunas e estilo **preto e branco** (folha branca, só tinta preta) ou colorido. Na janela de impressão, escolha *Salvar como PDF* para gerar o arquivo. |
 | **Backing** | Cifra → base tocada no site (bateria, baixo e acordes) com transposição e contagem; jam tracks; busca e reprodução de YouTube e Spotify sem sair do site, com **loop A–B** administrável no reprodutor fixo: marcar A e B, ligar, **pausar** (a música segue e os pontos ficam guardados), **retomar**, **reiniciar** do A, **seguir após o B** (termina o ciclo e continua) e limpar. |
 
 ## Rodar localmente
@@ -129,7 +130,7 @@ Entrando com o Google, seus dados passam a ficar também na **sua conta**, numa 
 
 - `npm test`: testes unitários (Vitest) — música, revisão espaçada, backup, WAV, looper, sincronização com um Drive falso etc.
 - `npm run a11y`: acessibilidade (axe-core) em todas as telas, no computador e no celular.
-- `npm run e2e`: testes no Chrome real sobre o build (`npm run build` antes), com microfone e Google/Drive simulados: abre todas as rotas e links internos, afinador (A2 e E2 +25 cents), looper (4,000 s exatos e 8 cliques no tempo) e sincronização entre dois aparelhos. Dá para rodar só algumas suítes: `npm run e2e -- tuner sync`.
+- `npm run e2e`: testes no Chrome real sobre o build (`npm run build` antes), com microfone e Google/Drive simulados: abre todas as rotas e links internos, impressão (opções, PDFs A4/Carta em paisagem e retrato com nº de páginas), afinador (A2 e E2 +25 cents), looper (4,000 s exatos e 8 cliques no tempo) e sincronização entre dois aparelhos. Dá para rodar só algumas suítes: `npm run e2e -- tuner sync`.
 - Os três rodam no GitHub Actions antes de cada publicação.
 
 ## Estrutura

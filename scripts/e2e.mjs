@@ -1,12 +1,13 @@
 /**
  * Testes de interface no Chrome real, sobre o build em dist/ (microfone e Google/Drive simulados).
  * Uso: npm run build && npm run e2e   (precisa do Chrome/Chromium; informe CHROME_PATH se não for achado)
- *      npm run e2e -- tuner sync      (roda só algumas suítes: smoke, tuner, looper, sync, dock)
+ *      npm run e2e -- tuner sync      (roda só algumas suítes: smoke, tuner, looper, sync, dock, print)
  *
  * - smoke:  abre todas as rotas e todos os links internos achados nelas; sem erro de JS e sem requisição externa.
  * - tuner:  afinador com microfone simulado (A2 afinada, E2 +25 cents), filtros desligados e microfone solto ao sair.
  * - looper: grava 2 compassos a 120 BPM (clique a cada 0,5 s): o áudio tem exatamente 4,000 s e 8 cliques no tempo.
  * - dock:   loop A–B do reprodutor fixo (YouTube simulado): ligar, pausar, retomar, seguir após o B, reiniciar, limpar.
+ * - print:  página Imprimir: opções, formas das notas, estilo, e PDFs reais (A4/Carta, paisagem/retrato, nº de páginas).
  * - sync:   login do Google e Drive simulados, dois aparelhos, exclusão, offline, sessão vencida e desconectar.
  */
 import { createServer } from 'node:http';
@@ -14,6 +15,9 @@ import { existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from '
 import { tmpdir } from 'node:os';
 import { extname, join, normalize } from 'node:path';
 import puppeteer from 'puppeteer-core';
+import pdfLib from 'pdf-lib';
+
+const { PDFDocument } = pdfLib;
 
 const DIST = join(process.cwd(), 'dist');
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2' };
@@ -232,7 +236,9 @@ async function looper() {
   ok('o arquivo de áudio tem exatamente o tamanho do loop', !!pcm && pcm.samples.length === lib[0].samples, pcm && `${pcm.samples.length}/${lib[0].samples}`);
   const on = pcm ? onsets(pcm) : [];
   const gaps = on.slice(1).map((t, i) => t - on[i]);
-  ok('8 cliques espaçados de 0,5 s (±3 ms): gravou no tempo', on.length === 8 && gaps.every((g) => Math.abs(g - 0.5) < 0.003), `n=${on.length} ${gaps.map((g) => g.toFixed(4)).join(',')}`);
+  // o microfone simulado do Chrome entrega blocos de 10 ms: um clique isolado pode cair 1 bloco depois; o conjunto não pode derivar
+  const span = on.length === 8 ? on[7] - on[0] : 0;
+  ok('8 cliques a cada 0,5 s: o intervalo total é 3,500 s e nenhum intervalo foge mais de 12 ms (blocos de 10 ms do microfone simulado)', on.length === 8 && Math.abs(span - 3.5) < 0.012 && gaps.every((g) => Math.abs(g - 0.5) < 0.012), `n=${on.length} span=${span.toFixed(4)} ${gaps.map((g) => g.toFixed(4)).join(',')}`);
 
   await waitFor(() => click(p, 'Gravar camada', '.pedal-main'), 10000);
   ok('camada por cima: aguarda o ciclo, grava e volta a tocar', (await waitState('Gravando camada', 8000)) && (await waitState('Tocando', 8000)));
@@ -455,8 +461,113 @@ async function dock() {
   await browser.close();
 }
 
+// ================= impressão (folhas de estudo e PDF) =================
+async function print() {
+  const browser = await launch();
+  const p = await newPage(browser, { width: 1400 });
+  const area = async () => ({ cards: await p.$$eval('.ps-card', (e) => e.length), legend: await p.$$eval('.ps-legend li', (e) => e.length), title: await p.$eval('.print-sheet h2', (e) => e.textContent) });
+  const shapes = (sel) => p.$$eval(`.print-sheet ${sel}`, (e) => e.length);
+  const setCfg = async (cfg) => {
+    await p.evaluate((c) => localStorage.setItem('ss.print', JSON.stringify(c)), cfg);
+    await p.reload({ waitUntil: 'networkidle0' });
+    await p.waitForSelector('.print-sheet');
+  };
+  const pdfInfo = async () => {
+    const pdf = await p.pdf({ preferCSSPageSize: true, printBackground: true });
+    const doc = await PDFDocument.load(pdf);
+    const { width, height } = doc.getPage(0).getSize();
+    return { pages: doc.getPageCount(), w: Math.round(width), h: Math.round(height), bytes: pdf.length };
+  };
+
+  await goto(p, '/imprimir');
+  await p.evaluate(() => localStorage.removeItem('ss.print'));
+  await p.reload({ waitUntil: 'networkidle0' });
+  let a = await area();
+  ok('abre com 5 shapes da pentatônica menor de Lá e legenda', a.cards === 5 && /Pentatônica menor/.test(a.title) && a.legend === 2, JSON.stringify(a));
+
+  // controles da tela
+  await click(p, 'Braço inteiro');
+  await click(p, 'Todas as notas');
+  a = await area();
+  ok('braço inteiro com todas as notas: 1 diagrama com 96 notas (6 cordas × 16 casas)', a.cards === 1 && /Todas as notas/.test(a.title) && (await p.$eval('.print-sheet .pb', (s) => /Sem notas|corda/.test(s.getAttribute('aria-label')))) && (await shapes('.pb g')) === 96);
+  await click(p, 'Nada', '.chips button');
+  ok('rótulo "Nada": as notas ficam sem texto', (await shapes('.pb g text')) === 0 && (await shapes('.pb g')) === 96);
+  await click(p, 'Nome da nota');
+  ok('rótulo "Nome da nota" escreve em cada nota', (await shapes('.pb g text')) === 96);
+  await click(p, 'Tônica, subdominante e dominante');
+  ok('destaque tônica/subdominante/dominante: formas diferentes e legenda de 4 itens', (await shapes('.pb g polygon')) >= 6 && (await shapes('.pb g rect')) >= 6 && (await area()).legend === 4);
+  await click(p, 'Nenhuma (em branco)');
+  ok('braço em branco: nenhuma nota e sem legenda', (await shapes('.pb g')) === 0 && (await area()).legend === 0);
+
+  await click(p, 'Shapes da escala');
+  await click(p, 'Todas', '.chips button');
+  await click(p, 'Acorde');
+  a = await area();
+  ok('acorde: digitações (vários diagramas) com o nome do acorde no título', a.cards >= 2 && /^A — /.test(a.title), JSON.stringify(a));
+  await click(p, 'Campo harmônico');
+  a = await area();
+  ok('campo harmônico: 7 acordes', a.cards === 7 && /Campo harmônico/.test(a.title), JSON.stringify(a));
+  await click(p, 'Tétrades');
+  ok('campo em tétrades', /tétrades/.test((await area()).title) && (await p.$$eval('.ps-card figcaption b', (e) => e.map((x) => x.textContent))).some((t) => /maj7/.test(t)));
+  await click(p, 'Braço em branco');
+  a = await area();
+  ok('braço em branco: 2 diagramas vazios por padrão', a.cards === 2 && (await shapes('.pb g')) === 0);
+
+  // estilo e página
+  await click(p, 'Colorido');
+  ok('estilo colorido desenha o braço em tom de madeira clara; preto e branco, não', (await p.$eval('.print-sheet', (e) => e.classList.contains('color'))) && (await shapes('.pb rect[fill="#faf5ea"]')) === 2);
+  await click(p, 'Preto e branco');
+  ok('preto e branco: sem preenchimento colorido', (await shapes('.pb rect[fill="#faf5ea"]')) === 0 && (await p.$eval('.print-sheet', (e) => getComputedStyle(e).backgroundColor)) === 'rgb(255, 255, 255)');
+
+  // impressão de verdade: título da aba, chamada de print e CSS de impressão
+  await setCfg({ kind: 'shapes', root: 9, scaleId: 'minor-pent', highlight: 'tsd' });
+  await p.evaluate(() => { window.__printed = []; window.print = () => window.__printed.push(document.title); });
+  await click(p, 'Imprimir / Salvar PDF');
+  const printed = await p.evaluate(() => window.__printed);
+  ok('o botão chama a impressão com o título da folha (nome sugerido do PDF)', printed.length === 1 && /Pentatônica menor.*shapes.*SongState/.test(printed[0]), JSON.stringify(printed));
+  await p.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+  ok('depois da impressão o título da aba volta ao normal', (await p.title()) === 'SongState');
+
+  await p.emulateMediaType('print');
+  const hidden = await p.evaluate(() => ['.topbar', '.tabbar', '.print-controls', '.page-header', '.legal-foot'].map((s) => [s, document.querySelector(s) ? getComputedStyle(document.querySelector(s)).display : 'none']));
+  ok('na impressão, menu, controles e rodapé do site somem', hidden.every(([, d]) => d === 'none'), JSON.stringify(hidden));
+  const paint = await p.evaluate(() => ({ body: getComputedStyle(document.body).backgroundColor, sheet: getComputedStyle(document.querySelector('.print-sheet')).boxShadow, shown: getComputedStyle(document.querySelector('.print-sheet')).display }));
+  ok('a página é branca e a folha ocupa a área toda (sem sombra)', paint.body === 'rgb(255, 255, 255)' && paint.sheet === 'none' && paint.shown !== 'none', JSON.stringify(paint));
+
+  // PDF real: tamanho do papel, orientação e número de páginas
+  let info = await pdfInfo();
+  ok('PDF A4 paisagem (842×595 pt) com os 5 shapes em 1 página', info.w === 842 && info.h === 595 && info.pages === 1, JSON.stringify(info));
+  await p.emulateMediaType('screen');
+  await setCfg({ kind: 'field', paper: 'letter', landscape: false, style: 'color' });
+  await p.emulateMediaType('print');
+  info = await pdfInfo();
+  ok('PDF Carta retrato (612×792 pt) com o campo harmônico', info.w === 612 && info.h === 792 && info.pages >= 1 && info.pages <= 2, JSON.stringify(info));
+  await p.emulateMediaType('screen');
+  await setCfg({ kind: 'blank', blankCount: 6, landscape: false });
+  await p.emulateMediaType('print');
+  info = await pdfInfo();
+  ok('PDF A4 retrato (595×842 pt) com 6 braços em branco em 1 página', info.w === 595 && info.h === 842 && info.pages === 1, JSON.stringify(info));
+  await p.emulateMediaType('screen');
+  await setCfg({ kind: 'shapes', scaleId: 'major', root: 0, direction: 'v', cols: 1, landscape: true });
+  await p.emulateMediaType('print');
+  info = await pdfInfo();
+  ok('muitos diagramas grandes viram várias páginas (e nenhum fica cortado: 7 posições em colunas únicas)', info.pages >= 2, JSON.stringify(info));
+  await p.emulateMediaType('screen');
+
+  // entradas do site e robustez
+  await setCfg({ kind: 'neck', fretMax: 999, paper: 'x', cols: 'a', positions: 'zzz', root: 'q' });
+  ok('configuração corrompida não derruba a página (volta ao padrão onde for inválida)', (await area()).cards === 1 && p.errs.length === 0, p.errs.join(' | '));
+  await goto(p, '/');
+  ok('a tela Braço tem o botão "Imprimir"', await click(p, 'Imprimir', 'a'));
+  ok('que leva à página de impressão', await waitFor(() => p.evaluate(() => location.hash === '#/imprimir'), 3000));
+  await p.evaluate(() => document.querySelector('button[aria-label="Configurações"]')?.click());
+  ok('Configurações tem o atalho para imprimir', await p.evaluate(() => [...document.querySelectorAll('.sheet a')].some((a) => /Imprimir/.test(a.textContent))));
+  ok('sem erros de JS', p.errs.length === 0, p.errs.join(' | '));
+  await browser.close();
+}
+
 // ================= execução =================
-const SUITES = { smoke, tuner, looper, sync, dock };
+const SUITES = { smoke, tuner, looper, sync, dock, print };
 const wanted = process.argv.slice(2).filter((a) => a in SUITES);
 for (const name of wanted.length ? wanted : Object.keys(SUITES)) {
   suite = name;
