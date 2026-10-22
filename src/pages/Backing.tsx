@@ -7,6 +7,8 @@ import { Search } from './Search';
 import { SongForm } from '../components/SongForm';
 import { Chips, PageHeader } from '../components/ui';
 import { BUILTIN_SONGS } from '../lib/library';
+import { parseChart } from '../lib/chords';
+import { detectKeyFromChart } from '../lib/keyfind';
 import { pcLabel } from '../lib/music';
 import { useSettings, useStoredList } from '../lib/storage';
 import { sanitizeSong, type Song } from '../lib/songs';
@@ -36,7 +38,9 @@ export function Backing({ jam, search, looper }: { jam?: boolean; search?: boole
 }
 
 function SongCard({ s, pref, lang }: { s: Song; pref: 'sharp' | 'flat'; lang: 'letters' | 'latin' }) {
-  const key = s.keyPc === null ? null : pcLabel(s.keyPc, pref, lang) + (s.minor ? 'm' : '');
+  // sem tom informado, mostra o detectado pela cifra (com "~" para indicar que é estimativa)
+  const guess = useMemo(() => (s.keyPc === null && s.chart ? detectKeyFromChart(parseChart(s.chart, pref).slots) : null), [s.keyPc, s.chart, pref]);
+  const key = s.keyPc !== null ? pcLabel(s.keyPc, pref, lang) + (s.minor ? 'm' : '') : guess ? `~${pcLabel(guess.best.keyPc, pref, lang)}${guess.best.minor ? 'm' : ''}` : null;
   return (
     <Link to={`/backing/${s.id}`} className="card song-card">
       <div className="song-art">{(s.title[0] ?? '♪').toUpperCase()}</div>

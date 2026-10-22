@@ -78,8 +78,22 @@ describe('shapes da escala', () => {
     expect(w.warnings.join(' ')).toMatch(/não existem/);
   });
 
-  it('escala de 7 notas gera 7 posições', () => {
-    expect(buildSheet(cfg({ kind: 'shapes', scaleId: 'major', root: 0 }), names).diagrams).toHaveLength(7);
+  it('escala de 7 notas: 5 formas (CAGED, padrão) ou 7 posições de 3 notas por corda', () => {
+    expect(buildSheet(cfg({ kind: 'shapes', scaleId: 'major', root: 0 }), names).diagrams).toHaveLength(5);
+    expect(buildSheet(cfg({ kind: 'shapes', scaleId: 'major', root: 0, system: 'caged' }), names).diagrams).toHaveLength(5);
+    expect(buildSheet(cfg({ kind: 'shapes', scaleId: 'major', root: 0, system: 'seven' }), names).diagrams).toHaveLength(7);
+    expect(buildSheet(cfg({ kind: 'shapes', scaleId: 'minor-pent', system: 'seven' }), names).diagrams).toHaveLength(5);
+  });
+
+  it('Lá menor natural em 5 formas: a forma 1 é a caixa das casas 5 a 8', () => {
+    const s = buildSheet(cfg({ kind: 'shapes', scaleId: 'natural-minor', root: 9, label: 'note' }), names);
+    expect(s.title).toMatch(/(5 formas)/);
+    const d = s.diagrams[0];
+    expect(d.board.fretMin).toBe(5);
+    expect(d.board.fretMax).toBe(9);
+    const frets = (str: number) => d.board.markers.filter((m) => m.string === str).map((m) => m.fret).sort((a, b) => a - b);
+    expect([0, 1, 2, 3, 4, 5].map(frets)).toEqual([[5, 7, 8], [5, 7, 8], [5, 7], [5, 7], [5, 6, 8], [5, 7, 8]]);
+    expect(buildSheet(cfg({ kind: 'shapes', scaleId: 'natural-minor', root: 9, system: 'seven' }), names).title).toMatch(/(7 posições)/);
   });
 
   it('destaque: tônica = 1 por corda grave, subdominante e dominante nas notas certas', () => {

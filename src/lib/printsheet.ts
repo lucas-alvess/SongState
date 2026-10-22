@@ -6,7 +6,7 @@
  */
 import { chordNotes, chordTypeById, findVoicings, CHORD_TYPES } from './chords';
 import { FIELDS, FUNC_NAMES, buildField, fieldById } from './harmony';
-import { INTERVAL_TOKENS, MAX_FRET, SCALES, buildScale, chordToneTokens, mod12, noteLabel, pcLabel, scaleById, scalePositions, tuningById, TUNINGS, type AccPref, type Lang, type Scale } from './music';
+import { INTERVAL_TOKENS, MAX_FRET, SCALES, buildScale, chordToneTokens, hasCagedShapes, mod12, noteLabel, pcLabel, scaleById, scalePositions, tuningById, TUNINGS, type AccPref, type Lang, type PositionSystem, type Scale } from './music';
 
 export const PRINT_KEY = 'ss.print';
 
@@ -22,6 +22,7 @@ export interface PrintConfig {
   root: number;
   scaleId: string;
   positions: number[]; // posições escolhidas (índices); vazio = todas
+  system: PositionSystem; // 5 formas (CAGED) ou 7 posições de 3 notas por corda (escalas de 7 notas)
   region: number; // 0 = região mais grave do braço
   neckContent: NeckContent;
   fretMax: number;
@@ -55,6 +56,7 @@ export const DEFAULT_PRINT: PrintConfig = {
   root: 9,
   scaleId: 'minor-pent',
   positions: [],
+  system: 'caged',
   region: 0,
   neckContent: 'scale',
   fretMax: 15,
@@ -103,6 +105,7 @@ export function normalizePrint(raw: unknown): PrintConfig {
     root: int(r.root, 0, 11, D.root),
     scaleId: typeof r.scaleId === 'string' && SCALES.some((s) => s.id === r.scaleId) ? r.scaleId : D.scaleId,
     positions: Array.isArray(r.positions) ? [...new Set(r.positions.filter((n): n is number => typeof n === 'number' && Number.isInteger(n) && n >= 0 && n < 12))].sort((a, b) => a - b) : [],
+    system: oneOf(r.system, ['seven', 'caged'], D.system),
     region: int(r.region, 0, 3, D.region),
     neckContent: oneOf(r.neckContent, ['scale', 'all', 'empty'], D.neckContent),
     fretMax: near(r.fretMax, FRET_CHOICES, D.fretMax),
@@ -339,10 +342,11 @@ export function buildSheet(raw: PrintConfig, names: Names): Sheet {
   };
 
   if (c.kind === 'shapes') {
-    title = `${scaleTitle} — shapes`;
+    const system: PositionSystem = c.system === 'caged' && hasCagedShapes(scale) ? 'caged' : 'seven';
+    title = `${scaleTitle} — shapes${hasCagedShapes(scale) ? (system === 'caged' ? ' (5 formas)' : ' (7 posições)') : ''}`;
     subtitle = `${scale.notes.map((n) => noteLabel(n.spelled, names.lang)).join(' · ')}  |  ${scale.def.formula.join(' ')}`;
     const chordTok = chordToneTokens(scale);
-    const positions = scalePositions(scale, tuning);
+    const positions = scalePositions(scale, tuning, system);
     const wanted = c.positions.length ? c.positions.filter((i) => i < positions.length) : positions.map((p) => p.index);
     if (c.positions.length && wanted.length < c.positions.length) warnings.push('Algumas posições escolhidas não existem nesta escala e foram ignoradas.');
     for (const i of wanted) {

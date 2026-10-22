@@ -174,7 +174,7 @@ export const MAX_FRET = 24;
  * (3 por corda em escalas de 7 notas, 2 nas pentatônicas), como nos sistemas
  * de 7 posições e 5 caixas.
  */
-export function scalePositions(scale: Scale, tuning: number[]): Position[] {
+function sevenPositions(scale: Scale, tuning: number[]): Position[] {
   const semis = scale.notes.map((n) => n.semis);
   const n = semis.length;
   const nStr = tuning.length;
@@ -233,6 +233,69 @@ export function scalePositions(scale: Scale, tuning: number[]): Position[] {
     });
   }
   return positions;
+}
+
+/** Sistema de posições: "seven" = 7 posições de 3 notas por corda; "caged" = as 5 formas (caixas) usadas com o CAGED. */
+export type PositionSystem = 'seven' | 'caged';
+
+/** Escalas que são modos da maior: a distância (em semitons) da tônica do modo até a tônica da maior "pai". */
+const MODE_OFFSET: Record<string, number> = { major: 0, dorian: 2, phrygian: 4, lydian: 5, mixolydian: 7, 'natural-minor': 9, locrian: 11 };
+
+/** Existem 5 formas para escalas de 7 notas. */
+export const hasCagedShapes = (scale: Scale) => scale.notes.length === 7;
+
+/**
+ * As 5 formas do CAGED: cada forma é "todas as notas da escala" dentro da janela de casas de uma das 5 caixas da
+ * pentatônica (maior pentatônica da maior "pai", nos modos; menor ou maior pentatônica da tônica, nas demais).
+ * Ex.: Lá menor natural, forma 1 = casas 5 a 8 (E: 5 7 8 · A: 5 7 8 · D: 5 7 · G: 5 7 · B: 5 6 8 · e: 5 7 8).
+ * A forma 1 é a caixa que começa na tônica (ou no grau da pentatônica logo acima dela) na corda mais grave.
+ */
+export function cagedPositions(scale: Scale, tuning: number[]): Position[] | null {
+  if (!hasCagedShapes(scale)) return null;
+  const offset = MODE_OFFSET[scale.def.id];
+  const pentDef = scaleById(offset !== undefined ? 'major-pent' : scale.def.formula.includes('b3') ? 'minor-pent' : 'major-pent');
+  const pentRoot = offset !== undefined ? mod12(scale.rootPc - offset) : scale.rootPc;
+  const pent = buildScale(pentDef, pentRoot, 'sharp');
+  const boxes = sevenPositions(pent, tuning); // numa pentatônica são as 5 caixas
+  if (boxes.length !== 5 || boxes.some((b) => !b.clusters.length)) return null;
+
+  let start = 0;
+  let best = 12;
+  pent.notes.forEach((n, i) => {
+    const d = mod12(n.pc - scale.rootPc);
+    if (d < best) {
+      best = d;
+      start = i;
+    }
+  });
+
+  return Array.from({ length: 5 }, (_, n) => {
+    const box = boxes[(start + n) % 5];
+    const clusters = box.clusters
+      .map((c) => {
+        const lo = Math.min(...c.map((x) => x.fret));
+        const hi = Math.max(...c.map((x) => x.fret));
+        const notes: FretNote[] = [];
+        for (let st = 0; st < tuning.length; st++) {
+          for (let f = lo; f <= hi; f++) {
+            const pc = mod12(tuning[st] + f);
+            if (scale.byPc.has(pc)) notes.push({ string: st, fret: f, pc });
+          }
+        }
+        return notes;
+      })
+      .filter((c) => c.length > 0);
+    return { index: n, label: `${n + 1}`, clusters, notes: clusters.flat() };
+  });
+}
+
+/** Posições da escala no sistema pedido (se a escala não tem 5 formas, volta às 7 posições). */
+export function scalePositions(scale: Scale, tuning: number[], system: PositionSystem = 'seven'): Position[] {
+  if (system === 'caged') {
+    const caged = cagedPositions(scale, tuning);
+    if (caged) return caged;
+  }
+  return sevenPositions(scale, tuning);
 }
 
 export const stringNumber = (string: number, total: number) => total - string; // 1 = mais aguda

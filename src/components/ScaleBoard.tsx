@@ -5,12 +5,14 @@ import {
   MAX_FRET,
   buildScale,
   chordToneTokens,
+  hasCagedShapes,
   noteLabel,
   pcAt,
   pcLabel,
   scaleById,
   scalePositions,
   tuningById,
+  type PositionSystem,
   type Scale,
 } from '../lib/music';
 import { useSettings, useVertical } from '../lib/storage';
@@ -19,6 +21,7 @@ export interface BoardState {
   root: number;
   scaleId: string;
   pos: number | null; // null = todas
+  system?: PositionSystem; // 7 posições (3 notas por corda) ou 5 formas (CAGED); ausente = 7 posições
   label: 'note' | 'degree' | 'none';
   color: 'role' | 'degree';
   chordTones: boolean;
@@ -35,6 +38,7 @@ export const DEFAULT_BOARD: BoardState = {
   root: 9,
   scaleId: 'minor-pent',
   pos: null,
+  system: 'seven',
   label: 'note',
   color: 'role',
   chordTones: false,
@@ -66,7 +70,8 @@ export function ScaleBoard({ state: st, setState, chordPcs, scaleIds, advanced =
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
 
   const scale: Scale = useMemo(() => buildScale(scaleById(st.scaleId), st.root, settings.pref), [st.scaleId, st.root, settings.pref]);
-  const positions = useMemo(() => scalePositions(scale, tuning), [scale, tuning]);
+  const system: PositionSystem = st.system === 'caged' && hasCagedShapes(scale) ? 'caged' : 'seven';
+  const positions = useMemo(() => scalePositions(scale, tuning, system), [scale, tuning, system]);
   const position = st.pos !== null ? positions[st.pos] : null;
   const chordTok = useMemo(() => chordToneTokens(scale), [scale]);
 
@@ -137,6 +142,19 @@ export function ScaleBoard({ state: st, setState, chordPcs, scaleIds, advanced =
             <ScaleSelect value={st.scaleId} onChange={(scaleId) => setState({ scaleId, pos: null, degrees: [] })} ids={scaleIds} />
           </Field>
         </div>
+        {hasCagedShapes(scale) && (
+          <Field label="Sistema de posições">
+            <Chips
+              small
+              value={system}
+              onChange={(v) => setState({ system: v, pos: null })}
+              options={[
+                { value: 'seven', label: '7 posições (3 notas por corda)' },
+                { value: 'caged', label: '5 formas (CAGED)' },
+              ]}
+            />
+          </Field>
+        )}
         <Field label={`Posição / shape (${positions.length})`}>
           <Chips
             small

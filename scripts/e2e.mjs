@@ -1,13 +1,15 @@
 /**
  * Testes de interface no Chrome real, sobre o build em dist/ (microfone e Google/Drive simulados).
  * Uso: npm run build && npm run e2e   (precisa do Chrome/Chromium; informe CHROME_PATH se não for achado)
- *      npm run e2e -- tuner sync      (roda só algumas suítes: smoke, tuner, looper, sync, dock, print)
+ *      npm run e2e -- tuner sync      (roda só algumas suítes: smoke, tuner, looper, sync, dock, print, key, caged)
  *
  * - smoke:  abre todas as rotas e todos os links internos achados nelas; sem erro de JS e sem requisição externa.
  * - tuner:  afinador com microfone simulado (A2 afinada, E2 +25 cents), filtros desligados e microfone solto ao sair.
  * - looper: grava 2 compassos a 120 BPM (clique a cada 0,5 s): o áudio tem exatamente 4,000 s e 8 cliques no tempo.
  * - dock:   loop A–B do reprodutor fixo (YouTube simulado): ligar, pausar, retomar, seguir após o B, reiniciar, limpar.
  * - print:  página Imprimir: opções, formas das notas, estilo, e PDFs reais (A4/Carta, paisagem/retrato, nº de páginas).
+ * - key:     tom da música (pela cifra e pelo áudio de um arquivo), escalas e arpejos recomendados.
+ * - caged:   as 5 formas das escalas de 7 notas (tela Braço e impressão).
  * - sync:   login do Google e Drive simulados, dois aparelhos, exclusão, offline, sessão vencida e desconectar.
  */
 import { createServer } from 'node:http';
@@ -566,8 +568,134 @@ async function print() {
   await browser.close();
 }
 
+// ================= tom da música e recomendações =================
+async function key() {
+  const browser = await launch();
+  const p = await newPage(browser, { width: 1300 });
+  const song = (id, extra = {}) => ({ id, title: `Música ${id}`, artist: 'x', keyPc: null, minor: false, bpm: 100, tags: [], notes: '', createdAt: 1, chart: '', style: 'rock', sources: [], ...extra });
+  const seed = async (songs) => {
+    await goto(p, '/');
+    await p.evaluate((s) => localStorage.setItem('ss.songs', JSON.stringify(s)), songs);
+  };
+  const panel = () => p.evaluate(() => document.querySelector('.key-panel')?.innerText ?? '');
+
+  // 1) pela cifra
+  await seed([song('am', { chart: '| Am | Dm | E7 | Am | Am | F | E7 | Am |' }), song('blues', { chart: '| A7 | D7 | A7 | E7 | D7 | A7 |' }), song('sem')]);
+  await goto(p, '/backing/am');
+  await p.reload({ waitUntil: 'networkidle0' });
+  await p.waitForSelector('.key-panel');
+  let t = await panel();
+  ok('tom detectado pela cifra: Lá menor, com confiança e motivos', /Tom: A menor/.test(t) && /detectado pela cifra/.test(t) && /confiança (alta|média)/.test(t) && /começa e termina na tônica/.test(t), t.slice(0, 200));
+  ok('o cabeçalho da música mostra "Tom: Am" e que foi detectado', await p.evaluate(() => /Tom: Am/.test(document.querySelector('.page-header')?.innerText ?? '') && /detectado pela cifra/.test(document.querySelector('.page-header')?.innerText ?? '')));
+  ok('escalas do tom: pentatônica menor primeiro, e menor harmônica (V maior)', /A Pentatônica menor/.test(t) && /A Menor harmônica/.test(t));
+  ok('tabela por acorde com arpejo e escala (E7: frígio dominante)', /Am[\s\S]*Arpejo A · C · E/.test(t) && /E7[\s\S]*Arpejo E · G♯ · B · D/.test(t) && /E Frígio dominante/.test(t), t.slice(200, 700));
+
+  // escolher uma escala e ver o arpejo no braço
+  await click(p, 'Ver no braço');
+  await sleep(300);
+  ok('"Ver no braço" mostra a opção de voltar à escala do tom', await p.evaluate(() => /Voltar à escala do tom/.test(document.body.innerText)));
+  await click(p, 'Voltar à escala do tom');
+  ok('e voltar', await waitFor(() => p.evaluate(() => !/Voltar à escala do tom/.test(document.body.innerText)), 2000));
+
+  // atalho de impressão
+  await p.evaluate(() => [...document.querySelectorAll('.key-row a')].find((a) => /Imprimir shapes/.test(a.getAttribute('aria-label') ?? ''))?.click());
+  ok('atalho "Escala" abre a impressão já com a escala e a tônica do acorde', await waitFor(async () => (await p.evaluate(() => location.hash)).startsWith('#/imprimir'), 3000) && (await waitFor(async () => /shapes/.test(await p.$eval('.print-sheet h2', (e) => e.textContent).catch(() => '')), 4000)));
+  await goto(p, '/backing/am');
+
+  // trocar de tom manualmente e salvar
+  const other = await p.evaluate(() => { const b = [...document.querySelectorAll('.key-panel [aria-label="Escolher outro tom"] .chip')].find((x) => x.getAttribute('aria-pressed') !== 'true'); const name = b?.textContent.split('·')[0].trim() ?? ''; b?.click(); return name; });
+  ok('escolher outro tom atualiza a tela', other.length > 0 && (await waitFor(() => p.evaluate((n) => (document.querySelector('.key-panel')?.innerText ?? '').includes('Tom: ' + n) && /escolhido por você/.test(document.querySelector('.key-panel')?.innerText ?? ''), other), 3000)), other);
+  const chosen = await p.evaluate(() => document.querySelector('.key-panel .tag.key')?.textContent ?? '');
+  await click(p, 'Salvar este tom na música');
+  ok('salvar grava o tom escolhido na música', await waitFor(async () => { const s = await ls(p, 'ss.songs'); const m = s?.find((x) => x.id === 'am'); return typeof m?.keyPc === 'number' && chosen.includes(m.minor ? 'menor' : 'maior'); }, 3000), chosen);
+  ok('depois de salvo, vale o tom informado', await waitFor(() => p.evaluate(() => /informado por você/.test(document.querySelector('.key-panel')?.innerText ?? '')), 3000));
+
+  // blues
+  await goto(p, '/backing/blues');
+  await p.waitForSelector('.key-panel');
+  t = await panel();
+  ok('blues em Lá: tom Lá maior, mixolídio e blues como alternativa no D7', /Tom: A maior/.test(t) && /D Mixolídio/.test(t) && /Blues menor/.test(t), t.slice(0, 120));
+
+  // sem cifra e sem áudio
+  await goto(p, '/backing/sem');
+  t = await p.evaluate(() => document.body.innerText);
+  ok('música sem cifra: explica como detectar o tom (cifra ou arquivo de áudio)', /Adicione a cifra/.test(t));
+
+  // lista de músicas: tom estimado com ~
+  await goto(p, '/backing');
+  await p.reload({ waitUntil: 'networkidle0' });
+  ok('na lista, músicas sem tom informado mostram o tom estimado (~)', await p.evaluate(() => [...document.querySelectorAll('.song-card')].some((c) => /Música blues/.test(c.innerText) && /~A\b/.test(c.innerText))));
+
+  // 2) pelo áudio de um arquivo (C G Am F em Dó maior, sintetizado)
+  const roots = [[0, 4, 7], [7, 11, 14], [9, 12, 16], [5, 9, 12]];
+  const gen = (t) => {
+    const ch = roots[Math.floor(t / 1.2) % 4];
+    let v = 0;
+    for (const n of ch) { const f = 440 * Math.pow(2, (48 + n - 69) / 12); v += Math.sin(2 * Math.PI * f * t) + 0.5 * Math.sin(4 * Math.PI * f * t) + 0.25 * Math.sin(6 * Math.PI * f * t); }
+    return (v / 3) * 0.3;
+  };
+  const wavFile = writeWav('key-c.wav', gen, 10);
+  const b64 = readFileSync(wavFile).toString('base64');
+  await seed([song('audio', { sources: [{ id: 's1', kind: 'file', label: 'faixa', fileId: 'f-key' }] })]);
+  await p.evaluate(
+    (b64) =>
+      new Promise((resolve, reject) => {
+        const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+        const r = indexedDB.open('songstation', 2);
+        r.onupgradeneeded = () => { for (const n of ['files', 'kv']) if (!r.result.objectStoreNames.contains(n)) r.result.createObjectStore(n); };
+        r.onsuccess = () => { const tx = r.result.transaction('files', 'readwrite'); tx.objectStore('files').put(new Blob([bytes], { type: 'audio/wav' }), 'f-key'); tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error); };
+        r.onerror = () => reject(r.error);
+      }),
+    b64,
+  );
+  await goto(p, '/backing/audio');
+  await p.reload({ waitUntil: 'networkidle0' });
+  await p.waitForSelector('.key-panel');
+  ok('música com arquivo de áudio oferece detectar pelo áudio', await p.evaluate(() => [...document.querySelectorAll('.key-panel button')].some((b) => /Detectar o tom pelo áudio/.test(b.textContent))));
+  await click(p, 'Detectar o tom pelo áudio');
+  ok('análise do áudio: Dó maior, "detectado pela análise do áudio"', await waitFor(() => p.evaluate(() => /Tom: C maior/.test(document.querySelector('.key-panel')?.innerText ?? '') && /análise do áudio/.test(document.querySelector('.key-panel')?.innerText ?? '')), 15000), (await panel()).slice(0, 200));
+  ok('sem erros de JS', p.errs.length === 0, p.errs.join(' | '));
+  await browser.close();
+}
+
+// ================= 5 formas (CAGED) =================
+async function caged() {
+  const browser = await launch();
+  const p = await newPage(browser, { width: 1300 });
+  await goto(p, '/');
+  await p.evaluate(() => localStorage.setItem('ss.board', JSON.stringify({ root: 9, scaleId: 'natural-minor', pos: null, label: 'note', fretMax: 17 })));
+  await p.reload({ waitUntil: 'networkidle0' });
+  const chips = () => p.$$eval('.scale-board .chips button', (b) => b.map((x) => x.textContent.trim()));
+  const posChips = () => p.evaluate(() => { const f = [...document.querySelectorAll('.scale-board .field')].find((x) => /^Posição/.test(x.querySelector('.field-label')?.textContent ?? '')); return f ? [...f.querySelectorAll('button')].map((b) => b.textContent.trim()) : []; });
+  const clickPos = (n) => p.evaluate((n) => { const f = [...document.querySelectorAll('.scale-board .field')].find((x) => /^Posição/.test(x.querySelector('.field-label')?.textContent ?? '')); [...f.querySelectorAll('button')].find((b) => b.textContent.trim() === n)?.click(); }, n);
+  let c = await chips();
+  ok('menor natural: opções de sistema (7 posições e 5 formas)', c.some((x) => /7 posições/.test(x)) && c.some((x) => /5 formas/.test(x)), c.join(' | '));
+  ok('por padrão continua com 7 posições (as lições dependem disso)', (await posChips()).join(' ') === 'Todas 1 2 3 4 5 6 7');
+  await click(p, '5 formas (CAGED)');
+  c = await chips();
+  ok('com 5 formas: posições 1 a 5', (await posChips()).join(' ') === 'Todas 1 2 3 4 5', (await posChips()).join(' '));
+  await clickPos('1');
+  await sleep(200);
+  const desc = await p.$eval('.scale-board svg.fretboard', (s) => s.getAttribute('aria-label'));
+  const byString = (n) => [...desc.matchAll(new RegExp(`corda ${n} casa (\\d+)`, 'g'))].map((m) => Number(m[1])).filter((f) => f <= 9).sort((a, b) => a - b).join(','); // o braço repete a forma uma oitava acima (casa 17+): confere só a região grave
+  // forma 1 de Lá menor natural: E 5 7 8 · A 5 7 8 · D 5 7 · G 5 7 · B 5 6 8 · e 5 7 8 (cordas 6 a 1)
+  ok('forma 1 de Lá menor natural = casas 5 a 8 (E 5,7,8 · A 5,7,8 · D 5,7 · G 5,7 · B 5,6,8 · e 5,7,8)', byString(6) === '5,7,8' && byString(5) === '5,7,8' && byString(4) === '5,7' && byString(3) === '5,7' && byString(2) === '5,6,8' && byString(1) === '5,7,8', desc.slice(0, 300));
+  await click(p, '7 posições');
+  ok('voltar às 7 posições', (await posChips()).join(' ') === 'Todas 1 2 3 4 5 6 7');
+
+  // impressão
+  await p.evaluate(() => localStorage.setItem('ss.print', JSON.stringify({ kind: 'shapes', root: 9, scaleId: 'natural-minor' })));
+  await goto(p, '/imprimir');
+  await p.reload({ waitUntil: 'networkidle0' });
+  ok('impressão: menor natural sai em 5 formas por padrão', (await p.$$eval('.ps-card', (e) => e.length)) === 5 && /5 formas/.test(await p.$eval('.print-sheet h2', (e) => e.textContent)));
+  await click(p, '7 posições (3 notas por corda)');
+  ok('impressão: dá para escolher 7 posições', (await waitFor(async () => (await p.$$eval('.ps-card', (e) => e.length)) === 7, 3000)));
+  ok('sem erros de JS', p.errs.length === 0, p.errs.join(' | '));
+  await browser.close();
+}
+
 // ================= execução =================
-const SUITES = { smoke, tuner, looper, sync, dock, print };
+const SUITES = { smoke, tuner, looper, sync, dock, print, key, caged };
 const wanted = process.argv.slice(2).filter((a) => a in SUITES);
 for (const name of wanted.length ? wanted : Object.keys(SUITES)) {
   suite = name;

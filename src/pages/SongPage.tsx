@@ -7,14 +7,19 @@ import { Metronome } from '../components/Metronome';
 import { SourcePlayer } from '../components/Players';
 import { DEFAULT_BOARD, ScaleBoard, type BoardState } from '../components/ScaleBoard';
 import { SongForm } from '../components/SongForm';
-import { Chips, Toggle } from '../components/ui';
+import { KeyPanel, type KeyCandidate } from '../components/KeyPanel';
+import { Toggle } from '../components/ui';
 import { chordHasMinorThird, parseChart } from '../lib/chords';
+import { adviseKey, type ScaleAdvice } from '../lib/keyadvice';
+import { analyzeKey } from '../lib/keyaudio';
+import { detectKeyFromChart, type KeyResult } from '../lib/keyfind';
 import { makeSlot, type StyleId } from '../lib/jam';
 import { BUILTIN_SONGS } from '../lib/library';
-import { mod12, pcLabel, scaleById } from '../lib/music';
-import { suggestedScales, type Song } from '../lib/songs';
+import { mod12, pcLabel } from '../lib/music';
+import type { Song } from '../lib/songs';
 import { deleteLoopFiles, sanitizeLoops, type LoopMeta } from '../lib/loops';
-import { delFile, useSettings, useStoredList } from '../lib/storage';
+import { delFile, getFile, useSettings, useStoredList } from '../lib/storage';
+import { Chips } from '../components/ui';
 
 export function SongPage() {
   const { id = '' } = useParams();
@@ -42,16 +47,68 @@ function SongView({ song }: { song: Song }) {
   const [player, setPlayer] = useState<PlayerState>({ slot: null, shift: 0 });
   const [transport, setTransport] = useState<(TransportEvent & { n: number }) | null>(null);
   const transportN = useRef(0);
+  const [audioKey, setAudioKey] = useState<KeyResult | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [audioMsg, setAudioMsg] = useState('');
+  const [pick, setPick] = useState<{ keyPc: number; minor: boolean } | null>(null);
+  const [focus, setFocus] = useState<{ rootPc: number; chordPcs?: number[]; id?: string } | null>(null);
+  const boardRef = useRef<HTMLElement>(null);
 
   const chart = useMemo(() => parseChart(song.chart ?? '', settings.pref), [song.chart, settings.pref]);
   const slots = useMemo(() => chart.slots.map((s) => makeSlot(s.rootPc, s.bassPc, s.typeId, s.len, s.bar, s.label)), [chart]);
 
   const first = chart.slots[0];
-  const keyPc = song.keyPc ?? first?.rootPc ?? 0;
-  const minor = song.keyPc !== null ? song.minor : first ? chordHasMinorThird(first.typeId) : false;
-  const suggestions = suggestedScales(minor);
+  // tom: o que você salvou vale mais; senão o da análise do áudio, depois o da cifra, e por fim o primeiro acorde
+  const detected = useMemo(() => detectKeyFromChart(chart.slots), [chart]);
+  const fileSrc = song.sources.find((s) => s.kind === 'file' && s.fileId);
+  const saved = song.keyPc !== null ? { keyPc: song.keyPc, minor: song.minor } : null;
+  const auto = pick ?? saved ?? (audioKey ? audioKey.best : detected ? detected.best : first ? { keyPc: first.rootPc, minor: chordHasMinorThird(first.typeId) } : { keyPc: 0, minor: false });
+  const source = pick ? 'escolhido' : saved ? 'salvo' : audioKey ? 'áudio' : detected ? 'cifra' : 'primeiro acorde';
+  const keyPc = auto.keyPc;
+  const minor = auto.minor;
+  const result = source === 'áudio' ? audioKey : detected;
+  const shiftedSlots = useMemo(() => chart.slots.map((s) => ({ ...s, rootPc: mod12(s.rootPc + player.shift), bassPc: mod12(s.bassPc + player.shift) })), [chart, player.shift]);
   const boardRoot = mod12(keyPc + player.shift);
-  const state: BoardState = { ...(board ?? { ...DEFAULT_BOARD, scaleId: suggestions[0], fretMax: 15 }), root: boardRoot };
+  const advice = useMemo(() => adviseKey(boardRoot, minor, shiftedSlots), [boardRoot, minor, shiftedSlots]);
+  const state: BoardState = { ...(board ?? { ...DEFAULT_BOARD, scaleId: advice.scales[0].scaleId, fretMax: 15 }), root: focus ? focus.rootPc : boardRoot };
+
+  const candidates = useMemo(() => {
+    const out: KeyCandidate[] = [];
+    const add = (g: { keyPc: number; minor: boolean }, tag: string) => {
+      if (!out.some((x) => x.keyPc === g.keyPc && x.minor === g.minor)) out.push({ keyPc: g.keyPc, minor: g.minor, tag });
+    };
+    if (saved) add(saved, 'salvo');
+    if (audioKey) add(audioKey.best, 'áudio');
+    if (detected) add(detected.best, 'cifra');
+    for (const r of [audioKey, detected]) r?.alternatives.slice(0, 2).forEach((g) => add(g, 'possível'));
+    add({ keyPc, minor }, 'atual');
+    return out.slice(0, 6);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [song.keyPc, song.minor, audioKey, detected, keyPc, minor]);
+
+  const analyze = async () => {
+    if (!fileSrc?.fileId) return;
+    setAnalyzing(true);
+    setAudioMsg('');
+    try {
+      const blob = await getFile(fileSrc.fileId);
+      if (!blob) throw new Error('O arquivo de áudio não está neste aparelho.');
+      const r = await analyzeKey(fileSrc.fileId, blob);
+      setAudioKey(r);
+      setPick(null);
+      setAudioMsg('');
+    } catch (e) {
+      setAudioMsg(e instanceof Error ? e.message : 'Não foi possível analisar o áudio.');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const onScale = (s: ScaleAdvice, chordPcs?: number[], id?: string) => {
+    setBoardRaw({ ...state, scaleId: s.scaleId, pos: null, degrees: [] });
+    setFocus(s.rootPc === boardRoot && !chordPcs ? null : { rootPc: s.rootPc, chordPcs, id });
+    boardRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  };
   const src = song.sources[Math.min(srcIdx, song.sources.length - 1)];
 
   const remove = async () => {
@@ -80,6 +137,7 @@ function SongView({ song }: { song: Song }) {
               Tom: {pcLabel(keyPc, settings.pref, settings.lang)}
               {minor ? 'm' : ''}
             </span>
+            {source !== 'salvo' && source !== 'escolhido' && <span className="tag">detectado{source === 'áudio' ? ' pelo áudio' : source === 'cifra' ? ' pela cifra' : ''}</span>}
             {song.bpm && <span className="tag">♩ {song.bpm} BPM</span>}
             {song.tags.map((t) => (
               <span key={t} className="tag">
@@ -144,10 +202,42 @@ function SongView({ song }: { song: Song }) {
         )}
       </section>
 
-      <section>
-        <h3 aria-level={2} className="section-title">Escalas para esta música</h3>
-        <Chips small value={state.scaleId} onChange={(scaleId) => setBoardRaw({ ...state, scaleId, pos: null, degrees: [] })} options={suggestions.map((id) => ({ value: id, label: scaleById(id).name }))} />
-        <ScaleBoard state={state} setState={(p) => setBoardRaw({ ...state, ...p })} chordPcs={player.slot?.pcs} advanced={false} />
+      <KeyPanel
+        keyPc={keyPc}
+        minor={minor}
+        source={source}
+        result={result}
+        candidates={candidates}
+        advice={advice}
+        pref={chart.pref}
+        lang={settings.lang}
+        canSave={!song.builtin && (song.keyPc !== keyPc || song.minor !== minor)}
+        onPick={(k, m) => {
+          setPick({ keyPc: k, minor: m });
+          setFocus(null);
+        }}
+        onSave={() => {
+          setSongs((l) => l.map((x) => (x.id === song.id ? { ...x, keyPc, minor } : x)));
+          setPick(null);
+        }}
+        audio={{ available: !!fileSrc, busy: analyzing, message: audioMsg, onAnalyze: analyze }}
+        hasChart={slots.length > 0}
+        hasStream={song.sources.some((s) => s.kind === 'youtube' || s.kind === 'spotify')}
+        onScale={onScale}
+        focusId={focus?.id ?? null}
+      />
+
+      <section ref={boardRef}>
+        <h3 aria-level={2} className="section-title">Braço</h3>
+        {focus && (
+          <p className="small-text">
+            Mostrando a escala escolhida{focus.chordPcs ? ' com o arpejo do acorde em destaque' : ''}.{' '}
+            <button type="button" className="btn small" onClick={() => setFocus(null)}>
+              Voltar à escala do tom
+            </button>
+          </p>
+        )}
+        <ScaleBoard state={state} setState={(p) => setBoardRaw({ ...state, ...p })} chordPcs={focus?.chordPcs ?? player.slot?.pcs} advanced={false} />
       </section>
 
       {song.notes && (

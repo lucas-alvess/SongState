@@ -1,11 +1,12 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MarkerShape, PrintBoard } from '../components/PrintBoard';
 import { Icon } from '../components/Icon';
 import { Chips, Field, PageHeader, RootChips, ScaleSelect, Toggle } from '../components/ui';
 import type { BoardState } from '../components/ScaleBoard';
 import { CHORD_GROUPS, CHORD_TYPES } from '../lib/chords';
 import { FIELDS, FIELD_GROUPS } from '../lib/harmony';
-import { buildScale, scaleById, scalePositions, TUNINGS, tuningById } from '../lib/music';
+import { buildScale, hasCagedShapes, scaleById, scalePositions, TUNINGS, tuningById } from '../lib/music';
 import { BLANK_CHOICES, DEFAULT_PRINT, FRET_CHOICES, MARGIN_CHOICES, PAPER_MM, PRINT_KEY, VOICING_CHOICES, buildSheet, normalizePrint, printDocTitle, printableMm, type PrintConfig } from '../lib/printsheet';
 import { useLocalStorage, useSettings } from '../lib/storage';
 
@@ -24,6 +25,18 @@ export function Print() {
   const cfg = useMemo(() => normalizePrint(raw), [raw]);
   const patch = useCallback((p: Partial<PrintConfig>) => setRaw((prev) => ({ ...normalizePrint(prev), ...p })), [setRaw]);
   const [copied, setCopied] = useState(false);
+  const [params, setParams] = useSearchParams();
+
+  // atalhos de outras telas: #/imprimir?scale=minor-pent&root=9  ou  #/imprimir?chord=maj7&root=0
+  useEffect(() => {
+    const root = Number(params.get('root'));
+    const scale = params.get('scale');
+    const chord = params.get('chord');
+    if (!scale && !chord) return;
+    const base = Number.isInteger(root) && root >= 0 && root < 12 ? { root } : {};
+    patch(scale ? { ...base, kind: 'shapes', scaleId: scale, positions: [] } : { ...base, kind: 'chord', chordType: chord as string, chordView: 'voicings' });
+    setParams({}, { replace: true });
+  }, [params, setParams, patch]);
 
   const names = useMemo(() => ({ lang: cfg.lang === 'auto' ? settings.lang : cfg.lang, pref: cfg.pref === 'auto' ? settings.pref : cfg.pref }), [cfg.lang, cfg.pref, settings.lang, settings.pref]);
   const sheet = useMemo(() => buildSheet(cfg, names), [cfg, names]);
@@ -32,7 +45,9 @@ export function Print() {
   const sheetW = cfg.landscape ? paper.h : paper.w;
   const scaleBased = cfg.kind === 'shapes' || cfg.kind === 'neck';
   const hasNotes = cfg.kind !== 'blank' && !(cfg.kind === 'neck' && cfg.neckContent === 'empty');
-  const posCount = useMemo(() => (cfg.kind === 'shapes' ? scalePositions(buildScale(scaleById(cfg.scaleId), cfg.root, names.pref), tuningById(cfg.tuningId).midi).length : 0), [cfg.kind, cfg.scaleId, cfg.root, cfg.tuningId, names.pref]);
+  const scaleObj = useMemo(() => buildScale(scaleById(cfg.scaleId), cfg.root, names.pref), [cfg.scaleId, cfg.root, names.pref]);
+  const canCaged = hasCagedShapes(scaleObj);
+  const posCount = useMemo(() => (cfg.kind === 'shapes' ? scalePositions(scaleObj, tuningById(cfg.tuningId).midi, cfg.system).length : 0), [cfg.kind, cfg.system, scaleObj, cfg.tuningId]);
 
   // o título da aba vira o nome sugerido do PDF enquanto a janela de impressão está aberta
   const doPrint = () => {
@@ -56,6 +71,7 @@ export function Print() {
       root: typeof board.root === 'number' ? board.root : cfg.root,
       scaleId: sc,
       positions: typeof board.pos === 'number' ? [board.pos] : [],
+      system: board.system === 'caged' ? 'caged' : 'seven',
       label: board.label === 'degree' || board.label === 'none' ? board.label : 'note',
       fretMax: [12, 15, 17, 19, 22, 24].find((n) => n >= (board.fretMax ?? 15)) ?? 24,
     });
@@ -105,6 +121,19 @@ export function Print() {
             )}
             {cfg.kind === 'shapes' && (
               <>
+                {canCaged && (
+                  <Field label="Sistema de posições">
+                    <Chips
+                      small
+                      value={cfg.system}
+                      onChange={(system) => patch({ system, positions: [] })}
+                      options={[
+                        { value: 'caged', label: '5 formas (CAGED)' },
+                        { value: 'seven', label: '7 posições (3 notas por corda)' },
+                      ]}
+                    />
+                  </Field>
+                )}
                 <Field label={`Posições (${posCount})`}>
                   <div className="chips small" role="group" aria-label="Posições a imprimir">
                     <button type="button" className={`chip${cfg.positions.length === 0 ? ' active' : ''}`} aria-pressed={cfg.positions.length === 0} onClick={() => patch({ positions: [] })}>

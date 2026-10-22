@@ -742,3 +742,16 @@ i.heat.l4 { background: #c4b0ff; }
   .print-preview { background: none !important; border: 0 !important; padding: 0 !important; overflow: visible !important; border-radius: 0 !important; }
   .print-sheet { width: auto !important; max-width: none !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
 }
+
+/* ---------- tom e recomendações ---------- */
+.key-panel h4 { font-size: 0.95rem; }
+.key-scales, .key-chords { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.key-scales li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.key-row { display: grid; grid-template-columns: 110px minmax(120px, 1fr) minmax(180px, 2fr) auto; gap: 6px 12px; align-items: start; padding: 8px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); }
+.key-row.active { border-color: var(--cyan); }
+.key-chord { display: flex; flex-direction: column; }
+.key-why { display: block; }
+@media (max-width: 760px) {
+  .key-row { grid-template-columns: 1fr; }
+}
+.chip.active .muted { color: inherit; opacity: 0.9; }
